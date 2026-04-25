@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "E78D3703-5727-4A27-B24F-D644C1C27E52",
+      "name" : "Default",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Movies.xcodeproj",
+        "identifier" : "A311C5C12F9C52AE00CA7838",
+        "name" : "MoviesTests"
+      }
+    }
+  ],
+  "version" : 1
+}

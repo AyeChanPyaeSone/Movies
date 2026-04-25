@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A311C6022F9C741600CA7838 /* AllTestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = A311C6012F9C741600CA7838 /* AllTestPlan.xctestplan */; };
+		B10000012F9D000000CA7838 /* TMDBKit in Frameworks */ = {isa = PBXBuildFile; productRef = B10000032F9D000000CA7838 /* TMDBKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A311C5C32F9C52AE00CA7838 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -23,14 +28,12 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXBuildFile section */
-		B10000012F9D000000CA7838 /* TMDBKit in Frameworks */ = {isa = PBXBuildFile; productRef = B10000032F9D000000CA7838 /* TMDBKit */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		A311C5B52F9C52AD00CA7838 /* Movies.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Movies.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A311C5C22F9C52AE00CA7838 /* MoviesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoviesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A311C5CC2F9C52AE00CA7838 /* MoviesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoviesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A311C5F42F9C70D100CA7838 /* TMDBTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TMDBTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A311C6012F9C741600CA7838 /* AllTestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = AllTestPlan.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,6 +50,16 @@
 		A311C5CF2F9C52AE00CA7838 /* MoviesUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MoviesUITests;
+			sourceTree = "<group>";
+		};
+		A311C5F52F9C70D100CA7838 /* TMDBTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TMDBTests;
+			sourceTree = "<group>";
+		};
+		A311C6002F9C721E00CA7838 /* Packages */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Packages;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -74,16 +87,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A311C5F12F9C70D100CA7838 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		A311C5AC2F9C52AD00CA7838 = {
 			isa = PBXGroup;
 			children = (
+				A311C6012F9C741600CA7838 /* AllTestPlan.xctestplan */,
 				A311C5B72F9C52AD00CA7838 /* Movies */,
 				A311C5C52F9C52AE00CA7838 /* MoviesTests */,
 				A311C5CF2F9C52AE00CA7838 /* MoviesUITests */,
+				A311C5F52F9C70D100CA7838 /* TMDBTests */,
 				A311C5B62F9C52AD00CA7838 /* Products */,
+				A311C6002F9C721E00CA7838 /* Packages */,
 			);
 			sourceTree = "<group>";
 		};
@@ -93,6 +116,7 @@
 				A311C5B52F9C52AD00CA7838 /* Movies.app */,
 				A311C5C22F9C52AE00CA7838 /* MoviesTests.xctest */,
 				A311C5CC2F9C52AE00CA7838 /* MoviesUITests.xctest */,
+				A311C5F42F9C70D100CA7838 /* TMDBTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -114,6 +138,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				A311C5B72F9C52AD00CA7838 /* Movies */,
+				A311C6002F9C721E00CA7838 /* Packages */,
 			);
 			name = Movies;
 			packageProductDependencies = (
@@ -169,6 +194,28 @@
 			productReference = A311C5CC2F9C52AE00CA7838 /* MoviesUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A311C5F32F9C70D100CA7838 /* TMDBTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A311C5F82F9C70D100CA7838 /* Build configuration list for PBXNativeTarget "TMDBTests" */;
+			buildPhases = (
+				A311C5F02F9C70D100CA7838 /* Sources */,
+				A311C5F12F9C70D100CA7838 /* Frameworks */,
+				A311C5F22F9C70D100CA7838 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A311C5F52F9C70D100CA7838 /* TMDBTests */,
+			);
+			name = TMDBTests;
+			packageProductDependencies = (
+			);
+			productName = TMDBTests;
+			productReference = A311C5F42F9C70D100CA7838 /* TMDBTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -190,6 +237,9 @@
 						CreatedOnToolsVersion = 26.3;
 						TestTargetID = A311C5B42F9C52AD00CA7838;
 					};
+					A311C5F32F9C70D100CA7838 = {
+						CreatedOnToolsVersion = 26.3;
+					};
 				};
 			};
 			buildConfigurationList = A311C5B02F9C52AD00CA7838 /* Build configuration list for PBXProject "Movies" */;
@@ -202,7 +252,7 @@
 			mainGroup = A311C5AC2F9C52AD00CA7838;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "TMDBKit" */,
+				B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/TMDBKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A311C5B62F9C52AD00CA7838 /* Products */;
@@ -212,6 +262,7 @@
 				A311C5B42F9C52AD00CA7838 /* Movies */,
 				A311C5C12F9C52AE00CA7838 /* MoviesTests */,
 				A311C5CB2F9C52AE00CA7838 /* MoviesUITests */,
+				A311C5F32F9C70D100CA7838 /* TMDBTests */,
 			);
 		};
 /* End PBXProject section */
@@ -221,6 +272,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A311C6022F9C741600CA7838 /* AllTestPlan.xctestplan in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -232,6 +284,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A311C5CA2F9C52AE00CA7838 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A311C5F22F9C70D100CA7838 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -262,6 +321,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A311C5F02F9C70D100CA7838 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -276,21 +342,6 @@
 			targetProxy = A311C5CD2F9C52AE00CA7838 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin XCLocalSwiftPackageReference section */
-		B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "TMDBKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Packages/TMDBKit;
-		};
-/* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		B10000032F9D000000CA7838 /* TMDBKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "TMDBKit" */;
-			productName = TMDBKit;
-		};
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A311C5D42F9C52AE00CA7838 /* Debug */ = {
@@ -554,6 +605,42 @@
 			};
 			name = Release;
 		};
+		A311C5F92F9C70D100CA7838 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.acps.com.TMDBTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A311C5FA2F9C70D100CA7838 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.acps.com.TMDBTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -593,7 +680,31 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A311C5F82F9C70D100CA7838 /* Build configuration list for PBXNativeTarget "TMDBTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A311C5F92F9C70D100CA7838 /* Debug */,
+				A311C5FA2F9C70D100CA7838 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/TMDBKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/TMDBKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B10000032F9D000000CA7838 /* TMDBKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/TMDBKit" */;
+			productName = TMDBKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A311C5AD2F9C52AD00CA7838 /* Project object */;
 }

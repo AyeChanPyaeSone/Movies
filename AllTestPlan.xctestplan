@@ -1,0 +1,31 @@
+{
+  "configurations" : [
+    {
+      "id" : "D9168681-2616-4A15-975B-768DC415026D",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Packages\/TMDBKit",
+        "identifier" : "TMDBKitTests",
+        "name" : "TMDBKitTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Movies.xcodeproj",
+        "identifier" : "A311C5C12F9C52AE00CA7838",
+        "name" : "MoviesTests"
+      }
+    }
+  ],
+  "version" : 1
+}
