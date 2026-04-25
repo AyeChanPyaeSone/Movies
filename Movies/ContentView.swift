@@ -22,29 +22,30 @@ struct ContentView: View {
                     } actions: {
                         Button("Load Movies") {
                             Task {
-                                await viewModel.loadMovies()
+                                await viewModel.loadMovies(reset: true)
                             }
                         }
                         .buttonStyle(.borderedProminent)
                     }
                 } else {
-                    List(viewModel.movies) { movie in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(movie.title)
-                                .font(.headline)
-
-                            if let releaseDate = movie.releaseDate, !releaseDate.isEmpty {
-                                Text(releaseDate)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Text(movie.overview)
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(3)
+                    List {
+                        ForEach(viewModel.movies) { movie in
+                            movieRow(movie)
+                                .onAppear {
+                                    Task {
+                                        await viewModel.loadNextPageIfNeeded(currentMovie: movie)
+                                    }
+                                }
                         }
-                        .padding(.vertical, 4)
+
+                        if viewModel.isLoadingMore {
+                            HStack {
+                                Spacer()
+                                ProgressView("Loading more movies")
+                                Spacer()
+                            }
+                            .listRowSeparator(.hidden)
+                        }
                     }
                     .listStyle(.plain)
                 }
@@ -52,9 +53,9 @@ struct ContentView: View {
             .navigationTitle("Popular Movies")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(viewModel.isLoading ? "Loading..." : "Load Movies") {
+                    Button(viewModel.isLoading ? "Loading..." : toolbarButtonTitle) {
                         Task {
-                            await viewModel.loadMovies()
+                            await viewModel.loadMovies(reset: true)
                         }
                     }
                     .disabled(viewModel.isLoading)
@@ -78,6 +79,29 @@ struct ContentView: View {
                 }
             )
         }
+    }
+
+    private var toolbarButtonTitle: String {
+        viewModel.movies.isEmpty ? "Load Movies" : "Refresh"
+    }
+
+    private func movieRow(_ movie: Movie) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(movie.title)
+                .font(.headline)
+
+            if let releaseDate = movie.releaseDate, !releaseDate.isEmpty {
+                Text(releaseDate)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(movie.overview)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineLimit(3)
+        }
+        .padding(.vertical, 4)
     }
 }
 
