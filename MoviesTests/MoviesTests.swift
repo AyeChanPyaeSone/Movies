@@ -15,240 +15,212 @@ struct MoviesTests {
     @MainActor
     @Test("Initial load stores page results and pagination metadata")
     func initialLoadStoresResultsAndMetadata() async {
-        let recorder = PageRequestRecorder()
-        let firstPage = makePage(
-            page: 1,
-            totalPages: 3,
-            movies: [
-                makeMovie(id: 1),
-                makeMovie(id: 2),
-            ]
-        )
-        let viewModel = MoviesViewModel { page in
-            await recorder.record(page)
-            return firstPage
-        }
+        let harness = MoviesListHarness()
+        let firstPage = makePage(page: 1, totalPages: 3, ids: [1, 2])
 
-        await viewModel.loadMovies()
+        await harness.setPage(firstPage, for: 1)
 
-        #expect(viewModel.movies == firstPage.results)
-        #expect(viewModel.currentPage == 1)
-        #expect(viewModel.totalPages == 3)
-        #expect(viewModel.canLoadMore)
-        #expect(viewModel.errorMessage == nil)
-        #expect(await recorder.snapshot() == [1])
+        await harness.loadFirstPage()
+
+        #expect(harness.viewModel.movies == firstPage.results)
+        #expect(harness.viewModel.currentPage == 1)
+        #expect(harness.viewModel.totalPages == 3)
+        #expect(harness.viewModel.canLoadMore)
+        #expect(harness.viewModel.errorMessage == nil)
+        #expect(await harness.requestedPages() == [1])
     }
 
     @MainActor
     @Test("Loading the last visible movie appends the next page once")
     func reachingLastMovieAppendsNextPage() async throws {
-        let recorder = PageRequestRecorder()
-        let firstPage = makePage(
-            page: 1,
-            totalPages: 3,
-            movies: [
-                makeMovie(id: 1),
-                makeMovie(id: 2),
-            ]
-        )
-        let secondPage = makePage(
-            page: 2,
-            totalPages: 3,
-            movies: [
-                makeMovie(id: 3),
-            ]
-        )
-        let viewModel = MoviesViewModel { page in
-            await recorder.record(page)
+        let harness = MoviesListHarness()
+        let firstPage = makePage(page: 1, totalPages: 3, ids: [1, 2])
+        let secondPage = makePage(page: 2, totalPages: 3, ids: [3])
 
-            switch page {
-            case 1:
-                return firstPage
-            case 2:
-                return secondPage
-            default:
-                Issue.record("Unexpected page requested: \(page)")
-                return secondPage
-            }
-        }
+        await harness.setPage(firstPage, for: 1)
+        await harness.setPage(secondPage, for: 2)
 
-        await viewModel.loadMovies()
-        let lastMovie = try #require(viewModel.movies.last)
+        await harness.loadFirstPage()
+        try await harness.loadNextPage()
 
-        await viewModel.loadNextPageIfNeeded(currentMovie: lastMovie)
-
-        #expect(viewModel.movies == firstPage.results + secondPage.results)
-        #expect(viewModel.currentPage == 2)
-        #expect(viewModel.totalPages == 3)
-        #expect(viewModel.canLoadMore)
-        #expect(await recorder.snapshot() == [1, 2])
+        #expect(harness.viewModel.movies == firstPage.results + secondPage.results)
+        #expect(harness.viewModel.currentPage == 2)
+        #expect(harness.viewModel.totalPages == 3)
+        #expect(harness.viewModel.canLoadMore)
+        #expect(await harness.requestedPages() == [1, 2])
     }
 
     @MainActor
     @Test("Pagination is ignored while a load is already in flight")
     func noAppendOccursWhileLoading() async throws {
-        let recorder = PageRequestRecorder()
+        let harness = MoviesListHarness()
         let gate = LoadGate()
-        let firstPage = makePage(
-            page: 1,
-            totalPages: 3,
-            movies: [
-                makeMovie(id: 1),
-            ]
-        )
-        let secondPage = makePage(
-            page: 2,
-            totalPages: 3,
-            movies: [
-                makeMovie(id: 2),
-            ]
-        )
-        let viewModel = MoviesViewModel { page in
-            await recorder.record(page)
+        let firstPage = makePage(page: 1, totalPages: 3, ids: [1])
+        let secondPage = makePage(page: 2, totalPages: 3, ids: [2])
 
-            switch page {
-            case 1:
-                return firstPage
-            case 2:
-                await gate.wait()
-                return secondPage
-            default:
-                Issue.record("Unexpected page requested: \(page)")
-                return secondPage
-            }
-        }
+        await harness.setPage(firstPage, for: 1)
+        await harness.setGatedPage(secondPage, for: 2, gate: gate)
 
-        await viewModel.loadMovies()
-        let lastMovie = try #require(viewModel.movies.last)
-        let firstAppend = Task {
-            await viewModel.loadNextPageIfNeeded(currentMovie: lastMovie)
-        }
+        await harness.loadFirstPage()
+        let pendingLoad = try harness.startLoadingNextPage()
 
-        await waitUntil {
-            await recorder.snapshot().count == 2
-        }
+        await harness.waitForRequestedPageCount(2)
 
-        #expect(viewModel.isLoading)
-        #expect(viewModel.isLoadingMore)
+        #expect(harness.viewModel.isLoading)
+        #expect(harness.viewModel.isLoadingMore)
 
-        await viewModel.loadNextPageIfNeeded(currentMovie: lastMovie)
+        try await harness.loadNextPage()
         await gate.open()
-        await firstAppend.value
+        await pendingLoad.value
 
-        #expect(await recorder.snapshot() == [1, 2])
-        #expect(viewModel.movies == firstPage.results + secondPage.results)
-        #expect(viewModel.currentPage == 2)
+        #expect(harness.viewModel.movies == firstPage.results + secondPage.results)
+        #expect(harness.viewModel.currentPage == 2)
+        #expect(harness.viewModel.totalPages == 3)
+        #expect(harness.viewModel.canLoadMore)
+        #expect(await harness.requestedPages() == [1, 2])
     }
 
     @MainActor
     @Test("Pagination stops at the final page")
     func noAppendOccursOnFinalPage() async throws {
-        let recorder = PageRequestRecorder()
-        let firstPage = makePage(
-            page: 1,
-            totalPages: 1,
-            movies: [
-                makeMovie(id: 1),
-            ]
-        )
-        let viewModel = MoviesViewModel { page in
-            await recorder.record(page)
-            return firstPage
-        }
+        let harness = MoviesListHarness()
+        let firstPage = makePage(page: 1, totalPages: 1, ids: [1])
 
-        await viewModel.loadMovies()
-        let lastMovie = try #require(viewModel.movies.last)
+        await harness.setPage(firstPage, for: 1)
 
-        await viewModel.loadNextPageIfNeeded(currentMovie: lastMovie)
+        await harness.loadFirstPage()
+        try await harness.loadNextPage()
 
-        #expect(viewModel.movies == firstPage.results)
-        #expect(viewModel.currentPage == 1)
-        #expect(viewModel.totalPages == 1)
-        #expect(viewModel.canLoadMore == false)
-        #expect(await recorder.snapshot() == [1])
+        #expect(harness.viewModel.movies == firstPage.results)
+        #expect(harness.viewModel.currentPage == 1)
+        #expect(harness.viewModel.totalPages == 1)
+        #expect(harness.viewModel.canLoadMore == false)
+        #expect(await harness.requestedPages() == [1])
     }
 
     @MainActor
     @Test("Append failures preserve existing movies and page state")
     func appendFailureKeepsExistingMovies() async throws {
-        let recorder = PageRequestRecorder()
-        let firstPage = makePage(
-            page: 1,
-            totalPages: 2,
-            movies: [
-                makeMovie(id: 1),
-            ]
-        )
-        let viewModel = MoviesViewModel { page in
-            await recorder.record(page)
+        let harness = MoviesListHarness()
+        let firstPage = makePage(page: 1, totalPages: 2, ids: [1])
 
-            switch page {
-            case 1:
-                return firstPage
-            case 2:
-                throw TestError("Next page failed")
-            default:
-                Issue.record("Unexpected page requested: \(page)")
-                return firstPage
-            }
-        }
+        await harness.setPage(firstPage, for: 1)
+        await harness.setFailure("Next page failed", for: 2)
 
-        await viewModel.loadMovies()
-        let lastMovie = try #require(viewModel.movies.last)
+        await harness.loadFirstPage()
+        try await harness.loadNextPage()
 
-        await viewModel.loadNextPageIfNeeded(currentMovie: lastMovie)
-
-        #expect(viewModel.movies == firstPage.results)
-        #expect(viewModel.currentPage == 1)
-        #expect(viewModel.totalPages == 2)
-        #expect(viewModel.errorMessage == "Next page failed")
-        #expect(await recorder.snapshot() == [1, 2])
+        #expect(harness.viewModel.movies == firstPage.results)
+        #expect(harness.viewModel.currentPage == 1)
+        #expect(harness.viewModel.totalPages == 2)
+        #expect(harness.viewModel.canLoadMore)
+        #expect(harness.viewModel.errorMessage == "Next page failed")
+        #expect(await harness.requestedPages() == [1, 2])
     }
 
     @MainActor
     @Test("Refresh failures keep the current movies visible")
     func resetFailureKeepsExistingMovies() async {
-        let recorder = PageRequestRecorder()
-        let failureSwitch = FailureSwitch()
-        let firstPage = makePage(
-            page: 1,
-            totalPages: 3,
-            movies: [
-                makeMovie(id: 1),
-                makeMovie(id: 2),
-            ]
-        )
-        let viewModel = MoviesViewModel { page in
-            await recorder.record(page)
+        let harness = MoviesListHarness()
+        let firstPage = makePage(page: 1, totalPages: 3, ids: [1, 2])
 
-            if await failureSwitch.isEnabled {
-                throw TestError("Refresh failed")
-            }
+        await harness.setPage(firstPage, for: 1)
 
-            return firstPage
-        }
+        await harness.loadFirstPage()
+        await harness.setFailure("Refresh failed", for: 1)
+        await harness.refresh()
 
-        await viewModel.loadMovies()
-        await failureSwitch.enable()
-        await viewModel.loadMovies(reset: true)
-
-        #expect(viewModel.movies == firstPage.results)
-        #expect(viewModel.currentPage == 1)
-        #expect(viewModel.totalPages == 3)
-        #expect(viewModel.errorMessage == "Refresh failed")
-        #expect(await recorder.snapshot() == [1, 1])
+        #expect(harness.viewModel.movies == firstPage.results)
+        #expect(harness.viewModel.currentPage == 1)
+        #expect(harness.viewModel.totalPages == 3)
+        #expect(harness.viewModel.canLoadMore)
+        #expect(harness.viewModel.errorMessage == "Refresh failed")
+        #expect(await harness.requestedPages() == [1, 1])
     }
 }
 
-private actor PageRequestRecorder {
-    private var pages: [Int] = []
+@MainActor
+private struct MoviesListHarness {
+    let movieClient: MockMovieClient
+    let viewModel: MoviesListViewModel
 
-    func record(_ page: Int) {
-        pages.append(page)
+    init() {
+        let movieClient = MockMovieClient()
+        self.movieClient = movieClient
+        self.viewModel = MoviesListViewModel(movieClient: movieClient)
     }
 
-    func snapshot() -> [Int] {
+    func setPage(_ moviePage: MoviePage, for page: Int) async {
+        await movieClient.setResponse(.success(moviePage), for: page)
+    }
+
+    func setGatedPage(_ moviePage: MoviePage, for page: Int, gate: LoadGate) async {
+        await movieClient.setResponse(.gatedSuccess(moviePage, gate), for: page)
+    }
+
+    func setFailure(_ message: String, for page: Int) async {
+        await movieClient.setResponse(.failure(TestError(message)), for: page)
+    }
+
+    func loadFirstPage() async {
+        await viewModel.loadMovies()
+    }
+
+    func refresh() async {
+        await viewModel.loadMovies(reset: true)
+    }
+
+    func loadNextPage() async throws {
+        let lastMovie = try #require(viewModel.movies.last)
+        await viewModel.loadNextPageIfNeeded(currentMovie: lastMovie)
+    }
+
+    func startLoadingNextPage() throws -> Task<Void, Never> {
+        let lastMovie = try #require(viewModel.movies.last)
+        return Task {
+            await viewModel.loadNextPageIfNeeded(currentMovie: lastMovie)
+        }
+    }
+
+    func waitForRequestedPageCount(_ expectedCount: Int) async {
+        await waitUntil {
+            await movieClient.requestedPages().count == expectedCount
+        }
+    }
+
+    func requestedPages() async -> [Int] {
+        await movieClient.requestedPages()
+    }
+}
+
+private actor MockMovieClient: MoviePageFetching {
+    private var pages: [Int] = []
+    private var responses: [Int: MockResponse] = [:]
+
+    func setResponse(_ response: MockResponse, for page: Int) {
+        responses[page] = response
+    }
+
+    func requestedPages() -> [Int] {
         pages
+    }
+
+    func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
+        pages.append(page)
+
+        guard let response = responses[page] else {
+            throw TestError("Unexpected page requested: \(page)")
+        }
+
+        switch response {
+        case .success(let moviePage):
+            return moviePage
+        case .failure(let error):
+            throw error
+        case .gatedSuccess(let moviePage, let gate):
+            await gate.wait()
+            return moviePage
+        }
     }
 }
 
@@ -267,12 +239,10 @@ private actor LoadGate {
     }
 }
 
-private actor FailureSwitch {
-    private(set) var isEnabled = false
-
-    func enable() {
-        isEnabled = true
-    }
+private enum MockResponse: Sendable {
+    case success(MoviePage)
+    case failure(TestError)
+    case gatedSuccess(MoviePage, LoadGate)
 }
 
 private struct TestError: LocalizedError {
@@ -298,12 +268,12 @@ private func waitUntil(
     Issue.record("Timed out waiting for async condition.")
 }
 
-private func makePage(page: Int, totalPages: Int, movies: [Movie]) -> MoviePage {
+private func makePage(page: Int, totalPages: Int, ids: [Int]) -> MoviePage {
     MoviePage(
         page: page,
-        results: movies,
+        results: ids.map(makeMovie),
         totalPages: totalPages,
-        totalResults: movies.count * totalPages
+        totalResults: ids.count * totalPages
     )
 }
 
