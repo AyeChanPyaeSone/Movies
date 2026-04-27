@@ -1,17 +1,12 @@
-//
-//  MoviesApp.swift
-//  Movies
-//
-//  Created by ayechanpyaesone on 25/4/2026.
-//
-
 import SwiftUI
 
 @main
 struct MoviesApp: App {
+    private let container = AppContainer.live
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MoviesListView(movieService: container.movieService)
         }
     }
 }

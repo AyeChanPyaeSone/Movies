@@ -4,10 +4,16 @@ import TMDBKit
 
 @MainActor
 @Observable
-final class MoviesViewModel {
+final class MoviesListViewModel {
+    @ObservationIgnored private let movieService: any MovieService
+
     private(set) var movies: [Movie] = []
     private(set) var isLoading = false
     private(set) var errorMessage: String?
+
+    init(movieService: any MovieService) {
+        self.movieService = movieService
+    }
 
     func loadMovies() async {
         guard !isLoading else {
@@ -18,7 +24,7 @@ final class MoviesViewModel {
         errorMessage = nil
 
         do {
-            movies = try await AppDependencies.movieClient.listMovies()
+            movies = try await movieService.listMovies()
         } catch {
             if let localizedError = error as? LocalizedError,
                let description = localizedError.errorDescription {
