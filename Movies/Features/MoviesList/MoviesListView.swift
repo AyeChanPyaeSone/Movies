@@ -11,42 +11,50 @@ struct MoviesListView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if viewModel.movies.isEmpty {
+                if viewModel.isLoading && viewModel.movies.isEmpty {
+                    ProgressView("Loading Movies")
+                } else if viewModel.movies.isEmpty {
                     ContentUnavailableView {
                         Label("No Movies Loaded", systemImage: "film.stack")
                     } description: {
-                        Text("Add your TMDB credential in AppContainer, then tap Load Movies.")
+                        Text("Set `TMDB_BEARER_TOKEN` or `TMDBBearerToken`, then tap Load Movies.")
                     } actions: {
-                        Button("Load Movies", action: loadMovies)
+                        Button("Load Movies", action: refreshMovies)
                             .buttonStyle(.borderedProminent)
                     }
                 } else {
-                    List(viewModel.movies) { movie in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(movie.title)
-                                .font(.headline)
-
-                            if let releaseDate = movie.releaseDate, !releaseDate.isEmpty {
-                                Text(releaseDate)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Text(movie.overview)
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(3)
+                    List {
+                        ForEach(viewModel.movies) { movie in
+                            MovieRowView(movie: movie)
+                                .task(id: movie.id) {
+                                    await viewModel.loadNextPageIfNeeded(currentMovie: movie)
+                                }
                         }
-                        .padding(.vertical, 4)
+
+                        if viewModel.isLoadingMore {
+                            HStack {
+                                Spacer()
+                                ProgressView("Loading more movies")
+                                Spacer()
+                            }
+                            .listRowSeparator(.hidden)
+                        }
                     }
                     .listStyle(.plain)
                 }
             }
+            .task {
+                guard viewModel.movies.isEmpty else {
+                    return
+                }
+
+                await viewModel.loadMovies()
+            }
             .navigationTitle("Popular Movies")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(viewModel.isLoading ? "Loading..." : "Load Movies", action: loadMovies)
-                        .disabled(viewModel.isLoading)
+                    Button(viewModel.isLoading ? "Loading..." : toolbarButtonTitle, action: refreshMovies)
+                        .disabled(viewModel.isLoading && viewModel.movies.isEmpty)
                 }
             }
             .alert(
@@ -62,6 +70,10 @@ struct MoviesListView: View {
         }
     }
 
+    private var toolbarButtonTitle: String {
+        viewModel.movies.isEmpty ? "Load Movies" : "Refresh"
+    }
+
     private var errorAlertIsPresented: Binding<Bool> {
         Binding(
             get: { viewModel.errorMessage != nil },
@@ -73,9 +85,9 @@ struct MoviesListView: View {
         )
     }
 
-    private func loadMovies() {
+    private func refreshMovies() {
         Task {
-            await viewModel.loadMovies()
+            await viewModel.loadMovies(reset: true)
         }
     }
 }
@@ -83,27 +95,32 @@ struct MoviesListView: View {
 #Preview {
     MoviesListView(
         movieService: PreviewMovieService(
-            movies: [
-                Movie(
-                    id: 1,
-                    title: "The Codex Cut",
-                    overview: "A refactored movie app finally gets the architecture it deserved.",
-                    posterPath: nil,
-                    backdropPath: nil,
-                    releaseDate: "2026-04-27",
-                    popularity: 9.4,
-                    voteAverage: 8.7,
-                    voteCount: 1280
-                )
-            ]
+            moviePage: MoviePage(
+                page: 1,
+                results: [
+                    Movie(
+                        id: 1,
+                        title: "The Codex Cut",
+                        overview: "A refactored movie app finally gets the architecture it deserved.",
+                        posterPath: nil,
+                        backdropPath: nil,
+                        releaseDate: "2026-04-27",
+                        popularity: 9.4,
+                        voteAverage: 8.7,
+                        voteCount: 1280
+                    )
+                ],
+                totalPages: 1,
+                totalResults: 1
+            )
         )
     )
 }
 
 private struct PreviewMovieService: MovieService {
-    let movies: [Movie]
+    let moviePage: MoviePage
 
-    func listMovies() async throws -> [Movie] {
-        movies
+    func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
+        moviePage
     }
 }

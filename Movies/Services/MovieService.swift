@@ -1,5 +1,5 @@
 import TMDBKit
 
 protocol MovieService: Sendable {
-    func listMovies() async throws -> [Movie]
+    func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage
 }

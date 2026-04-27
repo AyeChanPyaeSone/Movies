@@ -5,41 +5,110 @@ import TMDBKit
 @MainActor
 @Observable
 final class MoviesListViewModel {
-    @ObservationIgnored private let movieService: any MovieService
-
     private(set) var movies: [Movie] = []
-    private(set) var isLoading = false
     private(set) var errorMessage: String?
+    private(set) var currentPage = 0
+    private(set) var totalPages = 0
+    private var loadingState: LoadingState = .idle
+
+    var isLoading: Bool {
+        loadingState != .idle
+    }
+
+    var isLoadingMore: Bool {
+        loadingState == .loadingNextPage
+    }
+
+    var canLoadMore: Bool {
+        currentPage < totalPages
+    }
+
+    @ObservationIgnored
+    private let movieService: any MovieService
 
     init(movieService: any MovieService) {
         self.movieService = movieService
     }
 
-    func loadMovies() async {
+    func loadMovies(reset: Bool = true) async {
         guard !isLoading else {
             return
         }
 
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            movies = try await movieService.listMovies()
-        } catch {
-            if let localizedError = error as? LocalizedError,
-               let description = localizedError.errorDescription {
-                errorMessage = description
-            } else {
-                errorMessage = error.localizedDescription
-            }
-
-            movies = []
+        if !reset && !canLoadMore {
+            return
         }
 
-        isLoading = false
+        let mode: LoadMode = reset ? .refresh : .nextPage
+        let pageToLoad = reset ? 1 : currentPage + 1
+
+        startLoading(mode)
+        defer {
+            loadingState = .idle
+        }
+
+        do {
+            let moviePage = try await movieService.fetchPopularMoviesPage(pageToLoad)
+            apply(moviePage, for: mode)
+        } catch {
+            showError(error)
+        }
+    }
+
+    func loadNextPageIfNeeded(currentMovie: Movie) async {
+        guard movies.last?.id == currentMovie.id else {
+            return
+        }
+
+        await loadMovies(reset: false)
     }
 
     func dismissError() {
         errorMessage = nil
+    }
+}
+
+private extension MoviesListViewModel {
+    enum LoadingState {
+        case idle
+        case loadingFirstPage
+        case loadingNextPage
+    }
+
+    enum LoadMode {
+        case refresh
+        case nextPage
+    }
+
+    func startLoading(_ mode: LoadMode) {
+        switch mode {
+        case .refresh:
+            loadingState = .loadingFirstPage
+        case .nextPage:
+            loadingState = .loadingNextPage
+        }
+
+        errorMessage = nil
+    }
+
+    func apply(_ moviePage: MoviePage, for mode: LoadMode) {
+        switch mode {
+        case .refresh:
+            movies = moviePage.results
+        case .nextPage:
+            movies.append(contentsOf: moviePage.results)
+        }
+
+        currentPage = moviePage.page
+        totalPages = moviePage.totalPages
+    }
+
+    func showError(_ error: Error) {
+        if let localizedError = error as? LocalizedError,
+           let description = localizedError.errorDescription {
+            errorMessage = description
+        } else {
+            errorMessage = error.localizedDescription
+        }
     }
 }

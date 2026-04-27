@@ -1,3 +1,4 @@
+import Foundation
 import TMDBKit
 
 struct AppContainer {
@@ -5,17 +6,37 @@ struct AppContainer {
 }
 
 extension AppContainer {
-    static let live = AppContainer(
-        movieService: TMDBMovieService(
-            client: TMDBClient(
-                configuration: TMDBConfiguration(
-                    authorization: .bearerToken(AppConfiguration.tmdbBearerToken)
+    static let live: AppContainer = {
+        guard let bearerToken = AppConfiguration.tmdbBearerToken else {
+            return AppContainer(movieService: MissingMovieService())
+        }
+
+        return AppContainer(
+            movieService: TMDBMovieService(
+                client: TMDBClient(
+                    configuration: TMDBConfiguration(
+                        authorization: .bearerToken(bearerToken)
+                    )
                 )
             )
         )
-    )
+    }()
 }
 
 private enum AppConfiguration {
-    static let tmdbBearerToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5YmUyNmVmYzU2NTRiM2NkYmM3NmIzMTg5YmE2OTA3OSIsIm5iZiI6MTc3NzA3NzQ4Mi45NCwic3ViIjoiNjllYzBjZWEyMDVjMThmYzg0OTM1OWI1Iiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.aZ29MtPvGG7uWehqZ9BVYmYzx7zLZsDonbd7EsQvoXE"
+    static var tmdbBearerToken: String? {
+        if let environmentToken = ProcessInfo.processInfo.environment["TMDB_BEARER_TOKEN"],
+           !environmentToken.isEmpty {
+            return environmentToken
+        }
+
+        guard let infoDictionaryToken = Bundle.main.object(
+            forInfoDictionaryKey: "TMDBBearerToken"
+        ) as? String,
+        !infoDictionaryToken.isEmpty else {
+            return nil
+        }
+
+        return infoDictionaryToken
+    }
 }
