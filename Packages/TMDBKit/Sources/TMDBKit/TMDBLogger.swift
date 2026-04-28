@@ -1,5 +1,9 @@
-import OSLog
+import LoggingKit
 
 enum TMDBLogger {
-    static let network = Logger(subsystem: "TMDBKit", category: "network")
+    static let network = PrefixedLogger(
+        subsystem: "TMDBKit",
+        category: "network",
+        prefix: "[TMDBKit]"
+    )
 }

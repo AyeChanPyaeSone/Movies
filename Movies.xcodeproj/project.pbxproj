@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A311C6022F9C741600CA7838 /* AllTestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = A311C6012F9C741600CA7838 /* AllTestPlan.xctestplan */; };
+		B10000042F9D000000CA7838 /* LoggingKit in Frameworks */ = {isa = PBXBuildFile; productRef = B10000062F9D000000CA7838 /* LoggingKit */; };
 		B10000012F9D000000CA7838 /* TMDBKit in Frameworks */ = {isa = PBXBuildFile; productRef = B10000032F9D000000CA7838 /* TMDBKit */; };
 /* End PBXBuildFile section */
 
@@ -83,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B10000042F9D000000CA7838 /* LoggingKit in Frameworks */,
 				B10000012F9D000000CA7838 /* TMDBKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -157,6 +159,7 @@
 			);
 			name = Movies;
 			packageProductDependencies = (
+				B10000062F9D000000CA7838 /* LoggingKit */,
 				B10000032F9D000000CA7838 /* TMDBKit */,
 			);
 			productName = Movies;
@@ -267,6 +270,7 @@
 			mainGroup = A311C5AC2F9C52AD00CA7838;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				B10000052F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/LoggingKit" */,
 				B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/TMDBKit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -701,6 +705,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		B10000052F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/LoggingKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/LoggingKit;
+		};
 		B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/TMDBKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/TMDBKit;
@@ -708,6 +716,11 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		B10000062F9D000000CA7838 /* LoggingKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B10000052F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/LoggingKit" */;
+			productName = LoggingKit;
+		};
 		B10000032F9D000000CA7838 /* TMDBKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B10000022F9D000000CA7838 /* XCLocalSwiftPackageReference "Packages/TMDBKit" */;

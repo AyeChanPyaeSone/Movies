@@ -1,4 +1,5 @@
 import Foundation
+import LoggingKit
 import Observation
 import OSLog
 import TMDBKit
@@ -27,29 +28,25 @@ final class MoviesListViewModel {
     @ObservationIgnored
     private let movieService: any MovieService
     @ObservationIgnored
-    private let logger: Logger
-    @ObservationIgnored
     private let signposter: OSSignposter
 
     init(
         movieService: any MovieService,
-        logger: Logger? = nil,
         signposter: OSSignposter? = nil
     ) {
         self.movieService = movieService
-        self.logger = logger ?? MoviesLogger.moviesList
         self.signposter = signposter ?? MoviesLogger.moviesListSignposter
     }
 
     func loadMovies(reset: Bool = true) async {
         guard !isLoading else {
-            logger.debug("[MoviesList] Skipped movie load because another request is already in flight.")
+            MoviesLogger.moviesList.debug("Skipped movie load because another request is already in flight.")
             return
         }
 
         if !reset && !canLoadMore {
-            logger.debug(
-                "[MoviesList] Skipped next-page load because pagination is exhausted at page \(self.currentPage) of \(self.totalPages)."
+            MoviesLogger.moviesList.debug(
+                "Skipped next-page load because pagination is exhausted at page \(currentPage) of \(totalPages)."
             )
             return
         }
@@ -59,7 +56,7 @@ final class MoviesListViewModel {
         let intervalState = signposter.beginInterval(
             "Load Movies",
             id: signposter.makeSignpostID(),
-            "\(mode.logLabel, privacy: .public) page \(pageToLoad)"
+            "\(mode.logLabel) page \(pageToLoad)"
         )
 
         startLoading(mode)
@@ -69,17 +66,17 @@ final class MoviesListViewModel {
         }
 
         do {
-            logger.info(
-                "[MoviesList] Starting \(mode.logLabel, privacy: .public) movie load for page \(pageToLoad)."
+            MoviesLogger.moviesList.info(
+                "Starting \(mode.logLabel) movie load for page \(pageToLoad)."
             )
             let moviePage = try await movieService.fetchPopularMoviesPage(pageToLoad)
             apply(moviePage, for: mode)
-            logger.info(
-                "[MoviesList] Loaded page \(moviePage.page) with \(moviePage.results.count) movies. Current list count: \(self.movies.count)."
+            MoviesLogger.moviesList.info(
+                "Loaded page \(moviePage.page) with \(moviePage.results.count) movies. Current list count: \(movies.count)."
             )
         } catch {
-            logger.error(
-                "[MoviesList] Movie load failed for page \(pageToLoad): \(String(describing: error), privacy: .public)"
+            MoviesLogger.moviesList.error(
+                "Movie load failed for page \(pageToLoad): \(String(describing: error))"
             )
             showError(error)
         }

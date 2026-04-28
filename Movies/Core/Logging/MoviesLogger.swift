@@ -1,7 +1,11 @@
-import OSLog
+import LoggingKit
 
 enum MoviesLogger {
-    static let app = Logger(subsystem: "Movies", category: "app")
-    static let moviesList = Logger(subsystem: "Movies", category: "moviesList")
-    static let moviesListSignposter = OSSignposter(logger: moviesList)
+    static let app = PrefixedLogger(subsystem: "Movies", category: "app", prefix: "[App]")
+    static let moviesList = PrefixedLogger(
+        subsystem: "Movies",
+        category: "moviesList",
+        prefix: "[MoviesList]"
+    )
+    static let moviesListSignposter = moviesList.signposter
 }

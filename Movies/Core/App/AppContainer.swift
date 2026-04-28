@@ -1,5 +1,5 @@
 import Foundation
-import OSLog
+import LoggingKit
 import TMDBKit
 
 struct AppContainer {
@@ -9,11 +9,11 @@ struct AppContainer {
 extension AppContainer {
     static let live: AppContainer = {
         guard let bearerToken = AppConfiguration.tmdbBearerToken else {
-            MoviesLogger.app.error("[App] TMDB bearer token is missing. Falling back to MissingMovieService.")
+            MoviesLogger.app.error("TMDB bearer token is missing. Falling back to MissingMovieService.")
             return AppContainer(movieService: MissingMovieService())
         }
 
-        MoviesLogger.app.info("[App] Configured TMDB movie service from app configuration.")
+        MoviesLogger.app.info("Configured TMDB movie service from app configuration.")
         return AppContainer(
             movieService: TMDBMovieService(
                 client: TMDBClient(
