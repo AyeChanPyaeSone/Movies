@@ -32,7 +32,7 @@ struct MovieRowView: View {
             overview: "A preview row for checking spacing, typography, and truncation.",
             posterPath: nil,
             backdropPath: nil,
-            releaseDate: "2026-04-25",
+            releaseDate: "2026-04-27",
             popularity: 8.5,
             voteAverage: 7.9,
             voteCount: 120

@@ -24,14 +24,10 @@ final class MoviesListViewModel {
     }
 
     @ObservationIgnored
-    private let movieClient: any MoviePageFetching
+    private let movieService: any MovieService
 
-    init() {
-        self.movieClient = AppDependencies.movieClient
-    }
-
-    init(movieClient: any MoviePageFetching) {
-        self.movieClient = movieClient
+    init(movieService: any MovieService) {
+        self.movieService = movieService
     }
 
     func loadMovies(reset: Bool = true) async {
@@ -52,7 +48,7 @@ final class MoviesListViewModel {
         }
 
         do {
-            let moviePage = try await movieClient.fetchPopularMoviesPage(pageToLoad)
+            let moviePage = try await movieService.fetchPopularMoviesPage(pageToLoad)
             apply(moviePage, for: mode)
         } catch {
             showError(error)
@@ -69,15 +65,6 @@ final class MoviesListViewModel {
 
     func dismissError() {
         errorMessage = nil
-    }
-
-    private func showError(_ error: Error) {
-        if let localizedError = error as? LocalizedError,
-           let description = localizedError.errorDescription {
-            errorMessage = description
-        } else {
-            errorMessage = error.localizedDescription
-        }
     }
 }
 
@@ -114,5 +101,14 @@ private extension MoviesListViewModel {
 
         currentPage = moviePage.page
         totalPages = moviePage.totalPages
+    }
+
+    func showError(_ error: Error) {
+        if let localizedError = error as? LocalizedError,
+           let description = localizedError.errorDescription {
+            errorMessage = description
+        } else {
+            errorMessage = error.localizedDescription
+        }
     }
 }

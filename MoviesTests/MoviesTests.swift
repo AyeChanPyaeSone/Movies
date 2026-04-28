@@ -1,17 +1,9 @@
-//
-//  MoviesTests.swift
-//  MoviesTests
-//
-//  Created by ayechanpyaesone on 25/4/2026.
-//
-
 import Foundation
 import Testing
 import TMDBKit
 @testable import Movies
 
 struct MoviesTests {
-
     @MainActor
     @Test("Initial load stores page results and pagination metadata")
     func initialLoadStoresResultsAndMetadata() async {
@@ -19,7 +11,6 @@ struct MoviesTests {
         let firstPage = makePage(page: 1, totalPages: 3, ids: [1, 2])
 
         await harness.setPage(firstPage, for: 1)
-
         await harness.loadFirstPage()
 
         #expect(harness.viewModel.movies == firstPage.results)
@@ -87,7 +78,6 @@ struct MoviesTests {
         let firstPage = makePage(page: 1, totalPages: 1, ids: [1])
 
         await harness.setPage(firstPage, for: 1)
-
         await harness.loadFirstPage()
         try await harness.loadNextPage()
 
@@ -125,7 +115,6 @@ struct MoviesTests {
         let firstPage = makePage(page: 1, totalPages: 3, ids: [1, 2])
 
         await harness.setPage(firstPage, for: 1)
-
         await harness.loadFirstPage()
         await harness.setFailure("Refresh failed", for: 1)
         await harness.refresh()
@@ -141,25 +130,25 @@ struct MoviesTests {
 
 @MainActor
 private struct MoviesListHarness {
-    let movieClient: MockMovieClient
+    let movieService: MockMovieService
     let viewModel: MoviesListViewModel
 
     init() {
-        let movieClient = MockMovieClient()
-        self.movieClient = movieClient
-        self.viewModel = MoviesListViewModel(movieClient: movieClient)
+        let movieService = MockMovieService()
+        self.movieService = movieService
+        self.viewModel = MoviesListViewModel(movieService: movieService)
     }
 
     func setPage(_ moviePage: MoviePage, for page: Int) async {
-        await movieClient.setResponse(.success(moviePage), for: page)
+        await movieService.setResponse(.success(moviePage), for: page)
     }
 
     func setGatedPage(_ moviePage: MoviePage, for page: Int, gate: LoadGate) async {
-        await movieClient.setResponse(.gatedSuccess(moviePage, gate), for: page)
+        await movieService.setResponse(.gatedSuccess(moviePage, gate), for: page)
     }
 
     func setFailure(_ message: String, for page: Int) async {
-        await movieClient.setResponse(.failure(TestError(message)), for: page)
+        await movieService.setResponse(.failure(TestError(message)), for: page)
     }
 
     func loadFirstPage() async {
@@ -184,16 +173,16 @@ private struct MoviesListHarness {
 
     func waitForRequestedPageCount(_ expectedCount: Int) async {
         await waitUntil {
-            await movieClient.requestedPages().count == expectedCount
+            await movieService.requestedPages().count == expectedCount
         }
     }
 
     func requestedPages() async -> [Int] {
-        await movieClient.requestedPages()
+        await movieService.requestedPages()
     }
 }
 
-private actor MockMovieClient: MoviePageFetching {
+private actor MockMovieService: MovieService {
     private var pages: [Int] = []
     private var responses: [Int: MockResponse] = [:]
 
@@ -278,13 +267,15 @@ private func makePage(page: Int, totalPages: Int, ids: [Int]) -> MoviePage {
 }
 
 private func makeMovie(id: Int) -> Movie {
-    Movie(
+    let releaseDay = id < 10 ? "0\(id)" : "\(id)"
+
+    return Movie(
         id: id,
         title: "Movie \(id)",
         overview: "Overview \(id)",
         posterPath: nil,
         backdropPath: nil,
-        releaseDate: "2026-04-\(String(format: "%02d", id))",
+        releaseDate: "2026-04-\(releaseDay)",
         popularity: Double(id),
         voteAverage: 7.5,
         voteCount: 100 + id
