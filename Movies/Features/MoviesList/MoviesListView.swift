@@ -3,65 +3,99 @@ import TMDBKit
 
 struct MoviesListView: View {
     @State private var viewModel: MoviesListViewModel
+    @State private var selectedTab: MoviesListTab = .home
+    @State private var isShowingError = false
 
     init(movieService: any MovieService) {
         _viewModel = State(initialValue: MoviesListViewModel(movieService: movieService))
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if viewModel.isLoading && viewModel.movies.isEmpty {
-                    ProgressView("Loading Movies")
-                } else if viewModel.movies.isEmpty {
-                    ContentUnavailableView {
-                        Label("No Movies Loaded", systemImage: "film.stack")
-                    } description: {
-                        Text("Set `TMDB_BEARER_TOKEN` or `TMDBBearerToken`, then tap Load Movies.")
-                    } actions: {
-                        Button("Load Movies", action: refreshMovies)
-                            .buttonStyle(.borderedProminent)
-                    }
-                } else {
-                    List {
-                        ForEach(viewModel.movies) { movie in
-                            MovieRowView(movie: movie)
-                                .task(id: movie.id) {
-                                    await viewModel.loadNextPageIfNeeded(currentMovie: movie)
-                                }
-                        }
+        @Bindable var viewModel = viewModel
 
-                        if viewModel.isLoadingMore {
-                            HStack {
-                                Spacer()
-                                ProgressView("Loading more movies")
-                                Spacer()
-                            }
-                            .listRowSeparator(.hidden)
+        NavigationStack {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 7 / 255, green: 11 / 255, blue: 34 / 255),
+                        Color(red: 9 / 255, green: 18 / 255, blue: 55 / 255),
+                        Color(red: 17 / 255, green: 26 / 255, blue: 74 / 255)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                Group {
+                    if viewModel.isLoading && viewModel.movies.isEmpty {
+                        ProgressView("Loading Movies")
+                            .tint(.white)
+                            .foregroundStyle(.white)
+                    } else if viewModel.movies.isEmpty {
+                        ContentUnavailableView {
+                            Label("No Movies Loaded", systemImage: "film.stack")
+                        } description: {
+                            Text("Set `TMDB_BEARER_TOKEN` or `TMDBBearerToken`, then tap Load Movies.")
+                        } actions: {
+                            Button("Load Movies", action: refreshMovies)
+                                .buttonStyle(.borderedProminent)
                         }
+                    } else {
+                        ScrollView {
+                            VStack(alignment: .leading) {
+                                MoviesSearchFieldView(searchText: $viewModel.searchText)
+
+                                if let featuredMovie = viewModel.featuredMovie {
+                                    MoviesHeroCardView(movie: featuredMovie, playAction: refreshMovies)
+                                        .task(id: featuredMovie.id) {
+                                            await viewModel.loadNextPageIfNeeded(currentMovie: featuredMovie)
+                                        }
+                                }
+
+                                if viewModel.visibleSections.isEmpty {
+                                    ContentUnavailableView.search(text: viewModel.searchText)
+                                        .foregroundStyle(.white)
+                                } else {
+                                    ForEach(viewModel.visibleSections) { section in
+                                        MovieRowView(
+                                            section: section,
+                                            loadMoreAction: viewModel.loadNextPageIfNeeded(currentMovie:)
+                                        )
+                                    }
+                                }
+
+                                if viewModel.isLoadingMore {
+                                    HStack {
+                                        Spacer()
+                                        ProgressView("Loading more movies")
+                                            .tint(.white)
+                                            .foregroundStyle(.white.opacity(0.8))
+                                        Spacer()
+                                    }
+                                }
+                            }
+                            .padding()
+                            .padding(.top, 8)
+                        }
+                        .scrollIndicators(.hidden)
                     }
-                    .listStyle(.plain)
                 }
             }
             .task {
-                guard viewModel.movies.isEmpty else {
-                    return
-                }
-
-                await viewModel.loadMovies()
+                await loadInitialMoviesIfNeeded()
             }
-            .navigationTitle("Popular Movies")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(viewModel.isLoading ? "Loading..." : toolbarButtonTitle, action: refreshMovies)
-                        .disabled(viewModel.isLoading && viewModel.movies.isEmpty)
-                }
+            .onChange(of: viewModel.errorMessage) { _, newValue in
+                isShowingError = newValue != nil
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .bottom) {
+                MoviesListTabBarView(selection: $selectedTab)
             }
             .alert(
                 "Unable to Load Movies",
-                isPresented: errorAlertIsPresented,
+                isPresented: $isShowingError,
                 actions: {
-                    Button("OK", role: .cancel) {}
+                    Button("OK", role: .cancel, action: dismissError)
                 },
                 message: {
                     Text(viewModel.errorMessage ?? "")
@@ -70,19 +104,12 @@ struct MoviesListView: View {
         }
     }
 
-    private var toolbarButtonTitle: String {
-        viewModel.movies.isEmpty ? "Load Movies" : "Refresh"
-    }
+    private func loadInitialMoviesIfNeeded() async {
+        guard viewModel.movies.isEmpty else {
+            return
+        }
 
-    private var errorAlertIsPresented: Binding<Bool> {
-        Binding(
-            get: { viewModel.errorMessage != nil },
-            set: { isPresented in
-                if !isPresented {
-                    viewModel.dismissError()
-                }
-            }
-        )
+        await viewModel.loadMovies()
     }
 
     private func refreshMovies() {
@@ -90,37 +117,12 @@ struct MoviesListView: View {
             await viewModel.loadMovies(reset: true)
         }
     }
+
+    private func dismissError() {
+        viewModel.dismissError()
+    }
 }
 
 #Preview {
-    MoviesListView(
-        movieService: PreviewMovieService(
-            moviePage: MoviePage(
-                page: 1,
-                results: [
-                    Movie(
-                        id: 1,
-                        title: "The Codex Cut",
-                        overview: "A refactored movie app finally gets the architecture it deserved.",
-                        posterPath: nil,
-                        backdropPath: nil,
-                        releaseDate: "2026-04-27",
-                        popularity: 9.4,
-                        voteAverage: 8.7,
-                        voteCount: 1280
-                    )
-                ],
-                totalPages: 1,
-                totalResults: 1
-            )
-        )
-    )
-}
-
-private struct PreviewMovieService: MovieService {
-    let moviePage: MoviePage
-
-    func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
-        moviePage
-    }
+    MoviesListView(movieService: MoviesListPreviewMovieService())
 }

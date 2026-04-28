@@ -2,40 +2,47 @@ import SwiftUI
 import TMDBKit
 
 struct MovieRowView: View {
-    let movie: Movie
+    let section: MoviesListSection
+    let loadMoreAction: (Movie) async -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(movie.title)
-                .font(.headline)
+        VStack(alignment: .leading) {
+            HStack {
+                Text(section.title)
+                    .font(.title3)
+                    .bold()
+                    .foregroundStyle(.white)
 
-            if let releaseDate = movie.releaseDate, !releaseDate.isEmpty {
-                Text(releaseDate)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Spacer()
+
+                Text("See all")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.75))
             }
 
-            Text(movie.overview)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .lineLimit(3)
+            ScrollView(.horizontal) {
+                LazyHStack {
+                    ForEach(section.movies) { movie in
+                        MoviePosterCardView(movie: movie)
+                            .task(id: movie.id) {
+                                await loadMoreAction(movie)
+                            }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .scrollIndicators(.hidden)
         }
-        .padding(.vertical, 4)
+        .padding(.top, 12)
     }
 }
 
 #Preview {
     MovieRowView(
-        movie: Movie(
-            id: 1,
-            title: "Sample Movie",
-            overview: "A preview row for checking spacing, typography, and truncation.",
-            posterPath: nil,
-            backdropPath: nil,
-            releaseDate: "2026-04-27",
-            popularity: 8.5,
-            voteAverage: 7.9,
-            voteCount: 120
-        )
+        section: MoviesListSection(
+            title: "Action",
+            movies: MoviesListPreviewMovieService().moviePage.results
+        ),
+        loadMoreAction: { _ in }
     )
 }
