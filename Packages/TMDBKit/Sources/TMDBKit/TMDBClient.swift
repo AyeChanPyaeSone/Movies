@@ -28,15 +28,33 @@ public struct TMDBClient: Sendable {
         language: String? = nil,
         region: String? = nil
     ) async throws -> MoviePage {
+        let normalizedPage = max(1, page)
         let endpoint = TMDBEndpoint.popularMovies(
-            page: max(1, page),
+            page: normalizedPage,
             language: language ?? configuration.defaultLanguage,
             region: region ?? configuration.defaultRegion
         )
 
-        let request = try makeRequest(for: endpoint)
-        let (data, response) = try await session.data(for: request)
-        return try decodeResponse(data: data, response: response)
+        TMDBLogger.network.debug(
+            "Starting popular movies request for page \(normalizedPage, privacy: .public)."
+        )
+
+        do {
+            let request = try makeRequest(for: endpoint)
+            let (data, response) = try await session.data(for: request)
+            let moviePage = try decodeResponse(data: data, response: response)
+
+            TMDBLogger.network.info(
+                "Received popular movies page \(moviePage.page, privacy: .public) containing \(moviePage.results.count, privacy: .public) results."
+            )
+
+            return moviePage
+        } catch {
+            TMDBLogger.network.error(
+                "Popular movies request failed for page \(normalizedPage, privacy: .public): \(String(describing: error), privacy: .public)"
+            )
+            throw error
+        }
     }
 
     func makeRequest(for endpoint: TMDBEndpoint) throws -> URLRequest {
