@@ -36,7 +36,7 @@ public struct TMDBClient: Sendable {
         )
 
         TMDBLogger.network.debug(
-            "Starting popular movies request for page \(normalizedPage, privacy: .public)."
+            "[TMDBKit] Starting popular movies request for page \(normalizedPage)."
         )
 
         do {
@@ -45,13 +45,13 @@ public struct TMDBClient: Sendable {
             let moviePage = try decodeResponse(data: data, response: response)
 
             TMDBLogger.network.info(
-                "Received popular movies page \(moviePage.page, privacy: .public) containing \(moviePage.results.count, privacy: .public) results."
+                "[TMDBKit] Received popular movies page \(moviePage.page) containing \(moviePage.results.count) results."
             )
 
             return moviePage
         } catch {
             TMDBLogger.network.error(
-                "Popular movies request failed for page \(normalizedPage, privacy: .public): \(String(describing: error), privacy: .public)"
+                "[TMDBKit] Popular movies request failed for page \(normalizedPage): \(String(describing: error), privacy: .public)"
             )
             throw error
         }

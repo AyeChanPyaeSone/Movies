@@ -43,13 +43,13 @@ final class MoviesListViewModel {
 
     func loadMovies(reset: Bool = true) async {
         guard !isLoading else {
-            logger.debug("Skipped movie load because another request is already in flight.")
+            logger.debug("[MoviesList] Skipped movie load because another request is already in flight.")
             return
         }
 
         if !reset && !canLoadMore {
             logger.debug(
-                "Skipped next-page load because pagination is exhausted at page \(self.currentPage, privacy: .public) of \(self.totalPages, privacy: .public)."
+                "[MoviesList] Skipped next-page load because pagination is exhausted at page \(self.currentPage) of \(self.totalPages)."
             )
             return
         }
@@ -59,7 +59,7 @@ final class MoviesListViewModel {
         let intervalState = signposter.beginInterval(
             "Load Movies",
             id: signposter.makeSignpostID(),
-            "\(mode.logLabel, privacy: .public) page \(pageToLoad, privacy: .public)"
+            "\(mode.logLabel, privacy: .public) page \(pageToLoad)"
         )
 
         startLoading(mode)
@@ -70,16 +70,16 @@ final class MoviesListViewModel {
 
         do {
             logger.info(
-                "Starting \(mode.logLabel, privacy: .public) movie load for page \(pageToLoad, privacy: .public)."
+                "[MoviesList] Starting \(mode.logLabel, privacy: .public) movie load for page \(pageToLoad)."
             )
             let moviePage = try await movieService.fetchPopularMoviesPage(pageToLoad)
             apply(moviePage, for: mode)
             logger.info(
-                "Loaded page \(moviePage.page, privacy: .public) with \(moviePage.results.count, privacy: .public) movies. Current list count: \(self.movies.count, privacy: .public)."
+                "[MoviesList] Loaded page \(moviePage.page) with \(moviePage.results.count) movies. Current list count: \(self.movies.count)."
             )
         } catch {
             logger.error(
-                "Movie load failed for page \(pageToLoad, privacy: .public): \(String(describing: error), privacy: .public)"
+                "[MoviesList] Movie load failed for page \(pageToLoad): \(String(describing: error), privacy: .public)"
             )
             showError(error)
         }
