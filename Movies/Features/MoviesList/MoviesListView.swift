@@ -42,7 +42,7 @@ struct MoviesListView: View {
                         }
                     } else {
                         ScrollView {
-                            VStack(alignment: .leading) {
+                            LazyVStack(alignment: .leading, spacing: 20) {
                                 MoviesSearchFieldView(searchText: $viewModel.searchText)
 
                                 if let featuredMovie = viewModel.featuredMovie {
@@ -74,8 +74,10 @@ struct MoviesListView: View {
                                     }
                                 }
                             }
-                            .padding()
-                            .padding(.top, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                            .padding(.bottom, 24)
                         }
                         .scrollIndicators(.hidden)
                     }

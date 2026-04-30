@@ -5,7 +5,7 @@ struct MoviePosterCardView: View {
     let movie: Movie
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .topLeading) {
                 MovieArtworkView(
                     url: movie.posterURL,
@@ -26,14 +26,14 @@ struct MoviePosterCardView: View {
             Text(movie.title)
                 .font(.caption)
                 .foregroundStyle(.white)
-                .lineLimit(2)
+                .lineLimit(1)
 
             Text(movie.overview)
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.6))
                 .lineLimit(2)
         }
-        .frame(width: 104)
+        .frame(width: 96)
     }
 }
 

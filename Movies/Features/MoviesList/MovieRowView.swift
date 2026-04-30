@@ -6,7 +6,7 @@ struct MovieRowView: View {
     let loadMoreAction: (Movie) async -> Void
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(section.title)
                     .font(.title3)
@@ -21,7 +21,7 @@ struct MovieRowView: View {
             }
 
             ScrollView(.horizontal) {
-                LazyHStack {
+                LazyHStack(spacing: 12) {
                     ForEach(section.movies) { movie in
                         MoviePosterCardView(movie: movie)
                             .task(id: movie.id) {
@@ -29,11 +29,11 @@ struct MovieRowView: View {
                             }
                     }
                 }
-                .padding(.vertical, 4)
             }
             .scrollIndicators(.hidden)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.top, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

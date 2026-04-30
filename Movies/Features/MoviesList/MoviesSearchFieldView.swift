@@ -4,7 +4,7 @@ struct MoviesSearchFieldView: View {
     @Binding var searchText: String
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Discover")
                 .font(.title3)
                 .bold()
@@ -27,6 +27,7 @@ struct MoviesSearchFieldView: View {
                     .strokeBorder(.white.opacity(0.08))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

@@ -55,7 +55,7 @@ struct MoviesHeroCardView: View {
             }
             .padding()
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .clipShape(.rect(cornerRadius: 24))
         .overlay {
             RoundedRectangle(cornerRadius: 24)
