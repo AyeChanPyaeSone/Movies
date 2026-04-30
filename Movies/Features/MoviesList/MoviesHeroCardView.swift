@@ -40,6 +40,7 @@ struct MoviesHeroCardView: View {
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.84))
                     .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 HStack {
                     Button("Play Now", systemImage: "play.fill", action: playAction)
@@ -53,9 +54,10 @@ struct MoviesHeroCardView: View {
                         .tint(.white)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 200, alignment: .leading)
         .clipShape(.rect(cornerRadius: 24))
         .overlay {
             RoundedRectangle(cornerRadius: 24)

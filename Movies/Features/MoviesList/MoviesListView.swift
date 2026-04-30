@@ -72,13 +72,14 @@ struct MoviesListView: View {
                                             .foregroundStyle(.white.opacity(0.8))
                                         Spacer()
                                     }
+                                    .frame(maxWidth: .infinity)
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
                             .padding(.top, 12)
                             .padding(.bottom, 24)
                         }
+                        .contentMargins(.horizontal, 16, for: .scrollContent)
                         .scrollIndicators(.hidden)
                     }
                 }

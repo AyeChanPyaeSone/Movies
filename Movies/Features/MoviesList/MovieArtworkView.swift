@@ -11,7 +11,7 @@ struct MovieArtworkView: View {
             case .success(let image):
                 image
                     .resizable()
-                    .scaledToFill()
+                    .scaledToFit()
             case .empty:
                 ZStack {
                     LinearGradient(
@@ -45,8 +45,6 @@ struct MovieArtworkView: View {
                 Color.clear
             }
         }
-        .aspectRatio(aspectRatio, contentMode: .fit)
-        .clipShape(.rect(cornerRadius: 18))
     }
 }
 
