@@ -75,7 +75,7 @@ struct MoviesListPreviewMovieService: MovieService {
         totalResults: 6
     )
 
-    func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
+    func fetchMoviesPage(in category: MovieListCategory, page: Int) async throws -> MoviePage {
         moviePage
     }
 }

@@ -235,22 +235,23 @@ private struct MoviesListHarness {
 }
 
 private actor MockMovieService: MovieService {
-    private var pages: [Int] = []
-    private var responses: [Int: MockResponse] = [:]
+    private var requests: [MovieServiceRequest] = []
+    private var responses: [MovieServiceRequest: MockResponse] = [:]
 
     func setResponse(_ response: MockResponse, for page: Int) {
-        responses[page] = response
+        responses[MovieServiceRequest(category: .popular, page: page)] = response
     }
 
     func requestedPages() -> [Int] {
-        pages
+        requests.map(\.page)
     }
 
-    func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
-        pages.append(page)
+    func fetchMoviesPage(in category: MovieListCategory, page: Int) async throws -> MoviePage {
+        let request = MovieServiceRequest(category: category, page: page)
+        requests.append(request)
 
-        guard let response = responses[page] else {
-            throw TestError("Unexpected page requested: \(page)")
+        guard let response = responses[request] else {
+            throw TestError("Unexpected request: \(category) page \(page)")
         }
 
         switch response {
@@ -298,6 +299,11 @@ private enum MockResponse: Sendable {
     case success(MoviePage)
     case failure(TestError)
     case gatedSuccess(MoviePage, LoadGate)
+}
+
+private struct MovieServiceRequest: Hashable, Sendable {
+    let category: MovieListCategory
+    let page: Int
 }
 
 private struct TestError: LocalizedError {
