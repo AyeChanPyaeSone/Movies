@@ -14,10 +14,6 @@ struct MoviePosterCardView: View {
                 )
 
                 HStack {
-                    if let releaseYear = movie.releaseYear {
-                        MoviesTextBadge(text: releaseYear)
-                    }
-
                     MoviesRatingBadge(rating: movie.voteAverage)
                 }
                 .padding(8)
