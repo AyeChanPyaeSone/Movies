@@ -14,9 +14,13 @@ let package = Package(
             targets: ["TMDBKit"]
         ),
     ],
+    dependencies: [
+        .package(path: "../LoggingKit"),
+    ],
     targets: [
         .target(
-            name: "TMDBKit"
+            name: "TMDBKit",
+            dependencies: ["LoggingKit"]
         ),
         .testTarget(
             name: "TMDBKitTests",
