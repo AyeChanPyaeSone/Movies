@@ -11,6 +11,7 @@ final class MoviesListViewModel {
     private(set) var errorMessage: String?
     private(set) var currentPage = 0
     private(set) var totalPages = 0
+    var searchText = ""
     private var loadingState: LoadingState = .idle
 
     var isLoading: Bool {
@@ -23,6 +24,28 @@ final class MoviesListViewModel {
 
     var canLoadMore: Bool {
         currentPage < totalPages
+    }
+
+    var featuredMovie: Movie? {
+        guard searchText.isEmpty else {
+            return nil
+        }
+
+        return movies.first
+    }
+
+    var visibleSections: [MoviesListSection] {
+        let moviesToDisplay = filteredMovies
+
+        guard !moviesToDisplay.isEmpty else {
+            return []
+        }
+
+        if !searchText.isEmpty {
+            return [MoviesListSection(title: "Results", movies: moviesToDisplay)]
+        }
+
+        return makeDiscoverSections(from: Array(moviesToDisplay.dropFirst()))
     }
 
     @ObservationIgnored
@@ -83,6 +106,10 @@ final class MoviesListViewModel {
     }
 
     func loadNextPageIfNeeded(currentMovie: Movie) async {
+        guard searchText.isEmpty else {
+            return
+        }
+
         guard movies.last?.id == currentMovie.id else {
             return
         }
@@ -114,6 +141,32 @@ private extension MoviesListViewModel {
                 "next-page"
             }
         }
+    }
+
+    var filteredMovies: [Movie] {
+        guard !searchText.isEmpty else {
+            return movies
+        }
+
+        return movies.filter { movie in
+            movie.title.localizedStandardContains(searchText)
+        }
+    }
+
+    func makeDiscoverSections(from movies: [Movie]) -> [MoviesListSection] {
+        guard !movies.isEmpty else {
+            return []
+        }
+
+        let midpoint = max(1, Int(ceil(Double(movies.count) / 2)))
+        let actionMovies = Array(movies.prefix(midpoint))
+        let comedyMovies = Array(movies.dropFirst(midpoint))
+
+        return [
+            MoviesListSection(title: "Action", movies: actionMovies),
+            MoviesListSection(title: "Comedy", movies: comedyMovies)
+        ]
+        .filter { !$0.movies.isEmpty }
     }
 
     func startLoading(_ mode: LoadMode) {

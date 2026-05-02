@@ -126,6 +126,58 @@ struct MoviesTests {
         #expect(harness.viewModel.errorMessage == "Refresh failed")
         #expect(await harness.requestedPages() == [1, 1])
     }
+
+    @MainActor
+    @Test("Search filters titles using localized matching and switches to results mode")
+    func searchFiltersTitles() async {
+        let harness = MoviesListHarness()
+        let page = MoviePage(
+            page: 1,
+            results: [
+                makeMovie(id: 1, title: "Stellar Odyssey"),
+                makeMovie(id: 2, title: "Comedy Night"),
+                makeMovie(id: 3, title: "Galactic Run")
+            ],
+            totalPages: 1,
+            totalResults: 3
+        )
+
+        await harness.setPage(page, for: 1)
+        await harness.loadFirstPage()
+        harness.viewModel.searchText = "stellar"
+
+        #expect(harness.viewModel.featuredMovie == nil)
+        #expect(harness.viewModel.visibleSections == [
+            MoviesListSection(title: "Results", movies: [makeMovie(id: 1, title: "Stellar Odyssey")])
+        ])
+    }
+
+    @MainActor
+    @Test("Discover mode promotes the first movie and sections the rest")
+    func discoverModePromotesFirstMovie() async {
+        let harness = MoviesListHarness()
+        let page = MoviePage(
+            page: 1,
+            results: [
+                makeMovie(id: 1, title: "Stellar Odyssey"),
+                makeMovie(id: 2, title: "Comedy Night"),
+                makeMovie(id: 3, title: "Galactic Run"),
+                makeMovie(id: 4, title: "Velvet Heist"),
+                makeMovie(id: 5, title: "Afterlight")
+            ],
+            totalPages: 1,
+            totalResults: 5
+        )
+
+        await harness.setPage(page, for: 1)
+        await harness.loadFirstPage()
+
+        let sections = harness.viewModel.visibleSections
+
+        #expect(harness.viewModel.featuredMovie == page.results.first)
+        #expect(sections.map(\.title) == ["Action", "Comedy"])
+        #expect(sections.flatMap(\.movies) == Array(page.results.dropFirst()))
+    }
 }
 
 @MainActor
@@ -226,6 +278,20 @@ private actor LoadGate {
         continuation?.resume()
         continuation = nil
     }
+}
+
+private func makeMovie(id: Int, title: String) -> Movie {
+    Movie(
+        id: id,
+        title: title,
+        overview: "Overview for \(title)",
+        posterPath: nil,
+        backdropPath: nil,
+        releaseDate: "2026-04-27",
+        popularity: 8.0,
+        voteAverage: 7.5,
+        voteCount: 100
+    )
 }
 
 private enum MockResponse: Sendable {
