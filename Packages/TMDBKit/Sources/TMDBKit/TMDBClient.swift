@@ -15,6 +15,7 @@ public struct TMDBClient: Sendable {
         region: String? = nil
     ) async throws -> [Movie] {
         let moviePage = try await listMoviesPage(
+            in: .popular,
             page: page,
             language: language,
             region: region
@@ -24,18 +25,20 @@ public struct TMDBClient: Sendable {
     }
 
     public func listMoviesPage(
+        in category: MovieListCategory = .popular,
         page: Int = 1,
         language: String? = nil,
         region: String? = nil
     ) async throws -> MoviePage {
         let normalizedPage = max(1, page)
-        let endpoint = TMDBEndpoint.popularMovies(
+        let endpoint = TMDBEndpoint.movieList(
+            category: category,
             page: normalizedPage,
             language: language ?? configuration.defaultLanguage,
             region: region ?? configuration.defaultRegion
         )
 
-        TMDBLogger.network.debug("Starting popular movies request for page \(normalizedPage).")
+        TMDBLogger.network.debug("Starting \(category.logName) movies request for page \(normalizedPage).")
 
         do {
             let request = try makeRequest(for: endpoint)
@@ -43,16 +46,110 @@ public struct TMDBClient: Sendable {
             let moviePage = try decodeResponse(data: data, response: response)
 
             TMDBLogger.network.info(
-                "Received popular movies page \(moviePage.page) containing \(moviePage.results.count) results."
+                "Received \(category.logName) movies page \(moviePage.page) containing \(moviePage.results.count) results."
             )
 
             return moviePage
         } catch {
             TMDBLogger.network.error(
-                "Popular movies request failed for page \(normalizedPage): \(String(describing: error))"
+                "\(category.logName.capitalized) movies request failed for page \(normalizedPage): \(String(describing: error))"
             )
             throw error
         }
+    }
+
+    public func listTopRatedMovies(
+        page: Int = 1,
+        language: String? = nil,
+        region: String? = nil
+    ) async throws -> [Movie] {
+        try await listMovies(
+            in: .topRated,
+            page: page,
+            language: language,
+            region: region
+        )
+    }
+
+    public func listTopRatedMoviesPage(
+        page: Int = 1,
+        language: String? = nil,
+        region: String? = nil
+    ) async throws -> MoviePage {
+        try await listMoviesPage(
+            in: .topRated,
+            page: page,
+            language: language,
+            region: region
+        )
+    }
+
+    public func listUpcomingMovies(
+        page: Int = 1,
+        language: String? = nil,
+        region: String? = nil
+    ) async throws -> [Movie] {
+        try await listMovies(
+            in: .upcoming,
+            page: page,
+            language: language,
+            region: region
+        )
+    }
+
+    public func listUpcomingMoviesPage(
+        page: Int = 1,
+        language: String? = nil,
+        region: String? = nil
+    ) async throws -> MoviePage {
+        try await listMoviesPage(
+            in: .upcoming,
+            page: page,
+            language: language,
+            region: region
+        )
+    }
+
+    public func listNowPlayingMovies(
+        page: Int = 1,
+        language: String? = nil,
+        region: String? = nil
+    ) async throws -> [Movie] {
+        try await listMovies(
+            in: .nowPlaying,
+            page: page,
+            language: language,
+            region: region
+        )
+    }
+
+    public func listNowPlayingMoviesPage(
+        page: Int = 1,
+        language: String? = nil,
+        region: String? = nil
+    ) async throws -> MoviePage {
+        try await listMoviesPage(
+            in: .nowPlaying,
+            page: page,
+            language: language,
+            region: region
+        )
+    }
+
+    public func listMovies(
+        in category: MovieListCategory,
+        page: Int = 1,
+        language: String? = nil,
+        region: String? = nil
+    ) async throws -> [Movie] {
+        let moviePage = try await listMoviesPage(
+            in: category,
+            page: page,
+            language: language,
+            region: region
+        )
+
+        return moviePage.results
     }
 
     func makeRequest(for endpoint: TMDBEndpoint) throws -> URLRequest {

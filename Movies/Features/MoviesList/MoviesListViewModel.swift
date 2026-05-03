@@ -7,23 +7,34 @@ import TMDBKit
 @MainActor
 @Observable
 final class MoviesListViewModel {
-    private(set) var movies: [Movie] = []
     private(set) var errorMessage: String?
-    private(set) var currentPage = 0
-    private(set) var totalPages = 0
     var searchText = ""
     private var loadingState: LoadingState = .idle
+    private var moviePagesByCategory: [MovieListCategory: MoviePage] = [:]
+
+    var movies: [Movie] {
+        uniqueMovies(
+            from: displayCategories.flatMap { category in
+                moviePagesByCategory[category]?.results ?? []
+            }
+        )
+    }
 
     var isLoading: Bool {
-        loadingState != .idle
+        switch loadingState {
+        case .idle:
+            false
+        case .loadingHome, .loadingNextPage:
+            true
+        }
     }
 
     var isLoadingMore: Bool {
-        loadingState == .loadingNextPage
-    }
+        if case .loadingNextPage = loadingState {
+            return true
+        }
 
-    var canLoadMore: Bool {
-        currentPage < totalPages
+        return false
     }
 
     var featuredMovie: Movie? {
@@ -31,27 +42,32 @@ final class MoviesListViewModel {
             return nil
         }
 
-        return movies.first
+        return moviePagesByCategory[.nowPlaying]?.results.first
     }
 
     var visibleSections: [MoviesListSection] {
-        let moviesToDisplay = filteredMovies
-
-        guard !moviesToDisplay.isEmpty else {
-            return []
-        }
-
         if !searchText.isEmpty {
-            return [MoviesListSection(title: "Results", movies: moviesToDisplay)]
+            let results = filteredMovies
+            guard !results.isEmpty else {
+                return []
+            }
+
+            return [MoviesListSection(title: "Results", movies: results, category: nil)]
         }
 
-        return makeDiscoverSections(from: Array(moviesToDisplay.dropFirst()))
+        return displayCategories.compactMap(makeSection(for:))
     }
 
     @ObservationIgnored
     private let movieService: any MovieService
     @ObservationIgnored
     private let signposter: OSSignposter
+
+    private let displayCategories: [MovieListCategory] = [
+        .topRated,
+        .upcoming,
+        .nowPlaying,
+    ]
 
     init(
         movieService: any MovieService,
@@ -67,22 +83,86 @@ final class MoviesListViewModel {
             return
         }
 
-        if !reset && !canLoadMore {
+        let intervalState: OSSignpostIntervalState
+        if reset {
+            intervalState = signposter.beginInterval(
+                "Load Movies",
+                id: signposter.makeSignpostID(),
+                "refresh home shelves"
+            )
+        } else {
+            intervalState = signposter.beginInterval(
+                "Load Movies",
+                id: signposter.makeSignpostID(),
+                "reload home shelves"
+            )
+        }
+
+        loadingState = .loadingHome
+        errorMessage = nil
+
+        defer {
+            signposter.endInterval("Load Movies", intervalState)
+            loadingState = .idle
+        }
+
+        do {
+            MoviesLogger.moviesList.info("Loading home movie shelves.")
+            let loadedPages = try await fetchHomePages()
+            applyHomePages(loadedPages)
+            MoviesLogger.moviesList.info(
+                "Loaded home shelves: top rated \(loadedPages[.topRated]?.results.count ?? 0), upcoming \(loadedPages[.upcoming]?.results.count ?? 0), now playing \(loadedPages[.nowPlaying]?.results.count ?? 0)."
+            )
+        } catch {
+            MoviesLogger.moviesList.error(
+                "Home movie shelf load failed: \(String(describing: error))"
+            )
+            showError(error)
+        }
+    }
+
+    func loadNextPageIfNeeded(in section: MoviesListSection, currentMovie: Movie) async {
+        guard searchText.isEmpty else {
+            return
+        }
+
+        guard let category = section.category else {
+            return
+        }
+
+        guard let displayedMovies = makeSection(for: category)?.movies,
+              displayedMovies.last?.id == currentMovie.id else {
+            return
+        }
+
+        guard let currentPage = moviePagesByCategory[category] else {
+            return
+        }
+
+        guard currentPage.page < currentPage.totalPages else {
             MoviesLogger.moviesList.debug(
-                "Skipped next-page load because pagination is exhausted at page \(currentPage) of \(totalPages)."
+                "Skipped next-page load for \(category.title) because pagination is exhausted at page \(currentPage.page) of \(currentPage.totalPages)."
             )
             return
         }
 
-        let mode: LoadMode = reset ? .refresh : .nextPage
-        let pageToLoad = reset ? 1 : currentPage + 1
+        guard !isLoading else {
+            MoviesLogger.moviesList.debug(
+                "Skipped next-page load for \(category.title) because another request is already in flight."
+            )
+            return
+        }
+
+        let nextPage = currentPage.page + 1
         let intervalState = signposter.beginInterval(
             "Load Movies",
             id: signposter.makeSignpostID(),
-            "\(mode.logLabel) page \(pageToLoad)"
+            "next page \(nextPage) for \(category.title)"
         )
 
-        startLoading(mode)
+        loadingState = .loadingNextPage(category)
+        errorMessage = nil
+
         defer {
             signposter.endInterval("Load Movies", intervalState)
             loadingState = .idle
@@ -90,31 +170,19 @@ final class MoviesListViewModel {
 
         do {
             MoviesLogger.moviesList.info(
-                "Starting \(mode.logLabel) movie load for page \(pageToLoad)."
+                "Loading page \(nextPage) for \(category.title)."
             )
-            let moviePage = try await movieService.fetchPopularMoviesPage(pageToLoad)
-            apply(moviePage, for: mode)
+            let moviePage = try await fetchMoviesPage(in: category, page: nextPage)
+            append(moviePage, to: category)
             MoviesLogger.moviesList.info(
-                "Loaded page \(moviePage.page) with \(moviePage.results.count) movies. Current list count: \(movies.count)."
+                "Loaded page \(moviePage.page) for \(category.title) with \(moviePage.results.count) movies."
             )
         } catch {
             MoviesLogger.moviesList.error(
-                "Movie load failed for page \(pageToLoad): \(String(describing: error))"
+                "Movie load failed for \(category.title) page \(nextPage): \(String(describing: error))"
             )
             showError(error)
         }
-    }
-
-    func loadNextPageIfNeeded(currentMovie: Movie) async {
-        guard searchText.isEmpty else {
-            return
-        }
-
-        guard movies.last?.id == currentMovie.id else {
-            return
-        }
-
-        await loadMovies(reset: false)
     }
 
     func dismissError() {
@@ -125,71 +193,90 @@ final class MoviesListViewModel {
 private extension MoviesListViewModel {
     enum LoadingState {
         case idle
-        case loadingFirstPage
-        case loadingNextPage
-    }
-
-    enum LoadMode {
-        case refresh
-        case nextPage
-
-        var logLabel: String {
-            switch self {
-            case .refresh:
-                "refresh"
-            case .nextPage:
-                "next-page"
-            }
-        }
+        case loadingHome
+        case loadingNextPage(MovieListCategory)
     }
 
     var filteredMovies: [Movie] {
-        guard !searchText.isEmpty else {
-            return movies
-        }
-
-        return movies.filter { movie in
+        movies.filter { movie in
             movie.title.localizedStandardContains(searchText)
         }
     }
 
-    func makeDiscoverSections(from movies: [Movie]) -> [MoviesListSection] {
-        guard !movies.isEmpty else {
-            return []
-        }
-
-        let midpoint = max(1, Int(ceil(Double(movies.count) / 2)))
-        let actionMovies = Array(movies.prefix(midpoint))
-        let comedyMovies = Array(movies.dropFirst(midpoint))
+    func fetchHomePages() async throws -> [MovieListCategory: MoviePage] {
+        async let topRatedPage = fetchMoviesPage(in: .topRated, page: 1)
+        async let upcomingPage = fetchMoviesPage(in: .upcoming, page: 1)
+        async let nowPlayingPage = fetchMoviesPage(in: .nowPlaying, page: 1)
 
         return [
-            MoviesListSection(title: "Action", movies: actionMovies),
-            MoviesListSection(title: "Comedy", movies: comedyMovies)
+            .topRated: try await topRatedPage,
+            .upcoming: try await upcomingPage,
+            .nowPlaying: try await nowPlayingPage,
         ]
-        .filter { !$0.movies.isEmpty }
     }
 
-    func startLoading(_ mode: LoadMode) {
-        switch mode {
-        case .refresh:
-            loadingState = .loadingFirstPage
-        case .nextPage:
-            loadingState = .loadingNextPage
+    func fetchMoviesPage(in category: MovieListCategory, page: Int) async throws -> MoviePage {
+        switch category {
+        case .popular:
+            try await movieService.fetchPopularMoviesPage(page)
+        case .topRated:
+            try await movieService.fetchTopRatedMoviesPage(page)
+        case .upcoming:
+            try await movieService.fetchUpcomingMoviesPage(page)
+        case .nowPlaying:
+            try await movieService.fetchNowPlayingMoviesPage(page)
+        }
+    }
+
+    func makeSection(for category: MovieListCategory) -> MoviesListSection? {
+        guard let moviePage = moviePagesByCategory[category] else {
+            return nil
         }
 
-        errorMessage = nil
-    }
-
-    func apply(_ moviePage: MoviePage, for mode: LoadMode) {
-        switch mode {
-        case .refresh:
+        let movies: [Movie]
+        switch category {
+        case .nowPlaying:
+            movies = Array(moviePage.results.dropFirst())
+        case .popular, .topRated, .upcoming:
             movies = moviePage.results
-        case .nextPage:
-            movies.append(contentsOf: moviePage.results)
         }
 
-        currentPage = moviePage.page
-        totalPages = moviePage.totalPages
+        guard !movies.isEmpty else {
+            return nil
+        }
+
+        return MoviesListSection(
+            title: category.title,
+            movies: movies,
+            category: category
+        )
+    }
+
+    func uniqueMovies(from movies: [Movie]) -> [Movie] {
+        var seenMovieIDs = Set<Int>()
+
+        return movies.filter { movie in
+            seenMovieIDs.insert(movie.id).inserted
+        }
+    }
+
+    func applyHomePages(_ loadedPages: [MovieListCategory: MoviePage]) {
+        moviePagesByCategory = loadedPages
+    }
+
+    func append(_ moviePage: MoviePage, to category: MovieListCategory) {
+        guard let currentPage = moviePagesByCategory[category] else {
+            moviePagesByCategory[category] = moviePage
+            return
+        }
+
+        moviePagesByCategory[category] = MoviePage(
+            dates: moviePage.dates ?? currentPage.dates,
+            page: moviePage.page,
+            results: currentPage.results + moviePage.results,
+            totalPages: moviePage.totalPages,
+            totalResults: moviePage.totalResults
+        )
     }
 
     func showError(_ error: Error) {
