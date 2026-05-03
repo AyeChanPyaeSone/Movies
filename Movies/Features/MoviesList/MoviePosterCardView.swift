@@ -8,10 +8,12 @@ struct MoviePosterCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .topLeading) {
                 MovieArtworkView(
-                    url: movie.posterURL,
+                    url: movie.posterURL ?? movie.backdropURL,
                     aspectRatio: 2 / 3,
-                    placeholderSystemImage: "film.fill"
+                    placeholderSystemImage: "film.fill",
+                    contentMode: .fill
                 )
+                .clipShape(.rect(cornerRadius: 14))
 
                 HStack {
                     MoviesRatingBadge(rating: movie.voteAverage)
@@ -34,5 +36,5 @@ struct MoviePosterCardView: View {
 }
 
 #Preview {
-    MoviePosterCardView(movie: MoviesListPreviewMovieService().moviePage.results[0])
+    MoviePosterCardView(movie: MoviesListPreviewMovieService().nowPlayingPage.results[0])
 }

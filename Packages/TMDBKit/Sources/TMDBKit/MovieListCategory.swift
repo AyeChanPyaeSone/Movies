@@ -6,6 +6,19 @@ public enum MovieListCategory: String, Sendable, CaseIterable, Equatable {
     case upcoming
     case nowPlaying
 
+    public var title: String {
+        switch self {
+        case .popular:
+            "Popular"
+        case .topRated:
+            "Top Rated"
+        case .upcoming:
+            "Upcoming"
+        case .nowPlaying:
+            "Now Playing"
+        }
+    }
+
     var pathComponent: String {
         switch self {
         case .popular:

@@ -47,9 +47,6 @@ struct MoviesListView: View {
 
                                 if let featuredMovie = viewModel.featuredMovie {
                                     MoviesHeroCardView(movie: featuredMovie, playAction: refreshMovies)
-                                        .task(id: featuredMovie.id) {
-                                            await viewModel.loadNextPageIfNeeded(currentMovie: featuredMovie)
-                                        }
                                 }
 
                                 if viewModel.visibleSections.isEmpty {
@@ -59,7 +56,7 @@ struct MoviesListView: View {
                                     ForEach(viewModel.visibleSections) { section in
                                         MovieRowView(
                                             section: section,
-                                            loadMoreAction: viewModel.loadNextPageIfNeeded(currentMovie:)
+                                            loadMoreAction: viewModel.loadNextPageIfNeeded(in:currentMovie:)
                                         )
                                     }
                                 }
