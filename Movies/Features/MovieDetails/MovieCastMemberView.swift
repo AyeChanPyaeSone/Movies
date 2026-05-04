@@ -9,7 +9,8 @@ struct MovieCastMemberView: View {
             MovieArtworkView(
                 url: member.profileURL,
                 aspectRatio: 2 / 3,
-                placeholderSystemImage: "person.fill"
+                placeholderSystemImage: "person.fill",
+                contentMode: .fill
             )
             .frame(width: 88)
             .clipShape(.rect(cornerRadius: 14))

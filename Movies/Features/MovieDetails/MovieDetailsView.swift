@@ -80,7 +80,7 @@ struct MovieDetailsView: View {
     NavigationStack {
         MovieDetailsView(
             movieID: 1,
-            initialMovie: MoviesListPreviewMovieService().moviePage.results[0],
+            initialMovie: MoviesListPreviewMovieService().nowPlayingPage.results[0],
             movieService: MoviesListPreviewMovieService()
         )
     }

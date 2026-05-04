@@ -1,7 +1,7 @@
 import TMDBKit
 
 struct MissingMovieService: MovieService {
-    func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
+    func fetchMoviesPage(in category: MovieListCategory, page: Int) async throws -> MoviePage {
         throw TMDBError.missingAuthorization
     }
 

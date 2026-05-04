@@ -11,7 +11,8 @@ struct MoviesHeroCardView: View {
             MovieArtworkView(
                 url: movie.backdropURL ?? movie.posterURL,
                 aspectRatio: 16 / 10,
-                placeholderSystemImage: "film.stack.fill"
+                placeholderSystemImage: "film.stack.fill",
+                contentMode: .fill
             )
 
             LinearGradient(
@@ -67,7 +68,7 @@ struct MoviesHeroCardView: View {
 
 #Preview {
     MoviesHeroCardView(
-        movie: MoviesListPreviewMovieService().moviePage.results[0],
+        movie: MoviesListPreviewMovieService().nowPlayingPage.results[0],
         playAction: {},
         detailsAction: {}
     )

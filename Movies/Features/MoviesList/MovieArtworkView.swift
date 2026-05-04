@@ -4,14 +4,13 @@ struct MovieArtworkView: View {
     let url: URL?
     let aspectRatio: CGFloat
     let placeholderSystemImage: String
+    let contentMode: ContentMode
 
     var body: some View {
         AsyncImage(url: url) { phase in
             switch phase {
             case .success(let image):
-                image
-                    .resizable()
-                    .scaledToFit()
+                artworkImage(image)
             case .empty:
                 ZStack {
                     LinearGradient(
@@ -45,13 +44,37 @@ struct MovieArtworkView: View {
                 Color.clear
             }
         }
-        .aspectRatio(aspectRatio, contentMode: .fill)
+        .aspectRatio(aspectRatio, contentMode: .fit)
+        .frame(maxWidth: .infinity)
         .clipped()
+    }
+
+    @ViewBuilder
+    private func artworkImage(_ image: Image) -> some View {
+        switch contentMode {
+        case .fill:
+            image
+                .resizable()
+                .scaledToFill()
+        case .fit:
+            image
+                .resizable()
+                .scaledToFit()
+        @unknown default:
+            image
+                .resizable()
+                .scaledToFill()
+        }
     }
 }
 
 #Preview {
-    MovieArtworkView(url: nil, aspectRatio: 2 / 3, placeholderSystemImage: "film.fill")
+    MovieArtworkView(
+        url: nil,
+        aspectRatio: 2 / 3,
+        placeholderSystemImage: "film.fill",
+        contentMode: .fill
+    )
         .padding()
         .background(.black)
 }

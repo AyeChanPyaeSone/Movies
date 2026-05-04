@@ -9,7 +9,8 @@ struct MovieDetailsHeroView: View {
                 MovieArtworkView(
                     url: viewModel.backdropURL ?? viewModel.posterURL,
                     aspectRatio: 16 / 10,
-                    placeholderSystemImage: "film.stack.fill"
+                    placeholderSystemImage: "film.stack.fill",
+                    contentMode: .fill
                 )
                 .frame(maxWidth: .infinity)
 
@@ -23,7 +24,8 @@ struct MovieDetailsHeroView: View {
                     MovieArtworkView(
                         url: viewModel.posterURL,
                         aspectRatio: 2 / 3,
-                        placeholderSystemImage: "film.fill"
+                        placeholderSystemImage: "film.fill",
+                        contentMode: .fill
                     )
                     .frame(width: 104)
                     .clipShape(.rect(cornerRadius: 16))

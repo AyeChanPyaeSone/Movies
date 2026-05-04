@@ -1,21 +1,21 @@
 import Foundation
 
 enum TMDBEndpoint {
-    case popularMovies(page: Int, language: String, region: String?)
     case movieDetails(id: Int, language: String, appendToResponse: [String])
+    case movieList(category: MovieListCategory, page: Int, language: String, region: String?)
 
     var path: String {
         switch self {
-        case .popularMovies:
-            return "/movie/popular"
         case .movieDetails(let id, _, _):
             return "/movie/\(id)"
+        case .movieList(let category, _, _, _):
+            return "/movie/\(category.pathComponent)"
         }
     }
 
     var queryItems: [URLQueryItem] {
         switch self {
-        case .popularMovies(let page, let language, let region):
+        case .movieList(_, let page, let language, let region):
             var items = [
                 URLQueryItem(name: "language", value: language),
                 URLQueryItem(name: "page", value: String(page)),

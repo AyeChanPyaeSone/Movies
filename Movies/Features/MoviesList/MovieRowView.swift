@@ -3,7 +3,7 @@ import TMDBKit
 
 struct MovieRowView: View {
     let section: MoviesListSection
-    let loadMoreAction: (Movie) async -> Void
+    let loadMoreAction: (MoviesListSection, Movie) async -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -28,7 +28,7 @@ struct MovieRowView: View {
                         }
                         .buttonStyle(.plain)
                         .task(id: movie.id) {
-                            await loadMoreAction(movie)
+                            await loadMoreAction(section, movie)
                         }
                     }
                 }
@@ -44,10 +44,11 @@ struct MovieRowView: View {
     NavigationStack {
         MovieRowView(
             section: MoviesListSection(
-                title: "Action",
-                movies: MoviesListPreviewMovieService().moviePage.results
+                title: "Top Rated",
+                movies: MoviesListPreviewMovieService().topRatedPage.results,
+                category: .topRated
             ),
-            loadMoreAction: { _ in }
+            loadMoreAction: { _, _ in }
         )
     }
 }
