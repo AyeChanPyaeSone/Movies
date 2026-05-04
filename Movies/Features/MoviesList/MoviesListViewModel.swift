@@ -49,7 +49,7 @@ final class MoviesListViewModel {
     }
 
     @ObservationIgnored
-    private let movieService: any MovieService
+    let movieService: any MovieService
     @ObservationIgnored
     private let signposter: OSSignposter
 

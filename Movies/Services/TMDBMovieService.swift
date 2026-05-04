@@ -10,4 +10,8 @@ struct TMDBMovieService: MovieService {
     func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
         try await client.listMoviesPage(page: page)
     }
+
+    func fetchMovieDetails(id: Int) async throws -> MovieDetails {
+        try await client.movieDetails(id: id)
+    }
 }

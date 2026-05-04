@@ -23,10 +23,13 @@ struct MovieRowView: View {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 12) {
                     ForEach(section.movies) { movie in
-                        MoviePosterCardView(movie: movie)
-                            .task(id: movie.id) {
-                                await loadMoreAction(movie)
-                            }
+                        NavigationLink(value: movie.id) {
+                            MoviePosterCardView(movie: movie)
+                        }
+                        .buttonStyle(.plain)
+                        .task(id: movie.id) {
+                            await loadMoreAction(movie)
+                        }
                     }
                 }
             }
@@ -38,11 +41,13 @@ struct MovieRowView: View {
 }
 
 #Preview {
-    MovieRowView(
-        section: MoviesListSection(
-            title: "Action",
-            movies: MoviesListPreviewMovieService().moviePage.results
-        ),
-        loadMoreAction: { _ in }
-    )
+    NavigationStack {
+        MovieRowView(
+            section: MoviesListSection(
+                title: "Action",
+                movies: MoviesListPreviewMovieService().moviePage.results
+            ),
+            loadMoreAction: { _ in }
+        )
+    }
 }

@@ -178,6 +178,40 @@ struct MoviesTests {
         #expect(sections.map(\.title) == ["Action", "Comedy"])
         #expect(sections.flatMap(\.movies) == Array(page.results.dropFirst()))
     }
+
+    @MainActor
+    @Test("Movie details load stores rich TMDB details")
+    func movieDetailsLoadStoresRichDetails() async {
+        let harness = MovieDetailsHarness()
+        let details = makeDetails(id: 1)
+
+        await harness.setDetails(details, for: 1)
+        await harness.loadDetails()
+
+        #expect(harness.viewModel.details == details)
+        #expect(harness.viewModel.title == details.title)
+        #expect(harness.viewModel.cast.map(\.name) == ["Maya Chen", "Jon Bell"])
+        #expect(harness.viewModel.directors.map(\.name) == ["Rae Coleman"])
+        #expect(harness.viewModel.trailerURL?.absoluteString == "https://www.youtube.com/watch?v=abc123")
+        #expect(harness.viewModel.errorMessage == nil)
+        #expect(await harness.requestedDetailIDs() == [1])
+    }
+
+    @MainActor
+    @Test("Movie details failure keeps initial list data visible")
+    func movieDetailsFailureKeepsInitialMovieData() async {
+        let initialMovie = makeMovie(id: 1, title: "Initial Title")
+        let harness = MovieDetailsHarness(initialMovie: initialMovie)
+
+        await harness.setDetailsFailure("Details failed", for: 1)
+        await harness.loadDetails()
+
+        #expect(harness.viewModel.details == nil)
+        #expect(harness.viewModel.title == "Initial Title")
+        #expect(harness.viewModel.overview == initialMovie.overview)
+        #expect(harness.viewModel.errorMessage == "Details failed")
+        #expect(await harness.requestedDetailIDs() == [1])
+    }
 }
 
 @MainActor
@@ -237,6 +271,8 @@ private struct MoviesListHarness {
 private actor MockMovieService: MovieService {
     private var pages: [Int] = []
     private var responses: [Int: MockResponse] = [:]
+    private var detailIDs: [Int] = []
+    private var detailResponses: [Int: Result<MovieDetails, TestError>] = [:]
 
     func setResponse(_ response: MockResponse, for page: Int) {
         responses[page] = response
@@ -244,6 +280,14 @@ private actor MockMovieService: MovieService {
 
     func requestedPages() -> [Int] {
         pages
+    }
+
+    func setDetailsResponse(_ response: Result<MovieDetails, TestError>, for id: Int) {
+        detailResponses[id] = response
+    }
+
+    func requestedDetailIDs() -> [Int] {
+        detailIDs
     }
 
     func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
@@ -262,6 +306,48 @@ private actor MockMovieService: MovieService {
             await gate.wait()
             return moviePage
         }
+    }
+
+    func fetchMovieDetails(id: Int) async throws -> MovieDetails {
+        detailIDs.append(id)
+
+        guard let response = detailResponses[id] else {
+            throw TestError("Unexpected details requested: \(id)")
+        }
+
+        return try response.get()
+    }
+}
+
+@MainActor
+private struct MovieDetailsHarness {
+    let movieService: MockMovieService
+    let viewModel: MovieDetailsViewModel
+
+    init(initialMovie: Movie? = makeMovie(id: 1)) {
+        let movieService = MockMovieService()
+        self.movieService = movieService
+        self.viewModel = MovieDetailsViewModel(
+            movieID: initialMovie?.id ?? 1,
+            initialMovie: initialMovie,
+            movieService: movieService
+        )
+    }
+
+    func setDetails(_ details: MovieDetails, for id: Int) async {
+        await movieService.setDetailsResponse(.success(details), for: id)
+    }
+
+    func setDetailsFailure(_ message: String, for id: Int) async {
+        await movieService.setDetailsResponse(.failure(TestError(message)), for: id)
+    }
+
+    func loadDetails() async {
+        await viewModel.loadDetails()
+    }
+
+    func requestedDetailIDs() async -> [Int] {
+        await movieService.requestedDetailIDs()
     }
 }
 
@@ -300,7 +386,7 @@ private enum MockResponse: Sendable {
     case gatedSuccess(MoviePage, LoadGate)
 }
 
-private struct TestError: LocalizedError {
+private struct TestError: LocalizedError, Sendable {
     let errorDescription: String?
 
     init(_ description: String) {
@@ -345,5 +431,54 @@ private func makeMovie(id: Int) -> Movie {
         popularity: Double(id),
         voteAverage: 7.5,
         voteCount: 100 + id
+    )
+}
+
+private func makeDetails(id: Int) -> MovieDetails {
+    MovieDetails(
+        id: id,
+        title: "Movie \(id) Details",
+        originalTitle: "Movie \(id) Details",
+        overview: "Detailed overview \(id)",
+        tagline: "The signal gets stronger.",
+        posterPath: "/poster\(id).jpg",
+        backdropPath: "/backdrop\(id).jpg",
+        releaseDate: "2026-04-27",
+        runtime: 126,
+        status: "Released",
+        homepage: nil,
+        popularity: 11.4,
+        voteAverage: 8.2,
+        voteCount: 2048,
+        genres: [
+            MovieGenre(id: 28, name: "Action")
+        ],
+        credits: MovieCredits(
+            cast: [
+                MovieCastMember(id: 10, name: "Maya Chen", character: "Nova", profilePath: "/maya.jpg"),
+                MovieCastMember(id: 11, name: "Jon Bell", character: "Rowe", profilePath: "/jon.jpg")
+            ],
+            crew: [
+                MovieCrewMember(
+                    id: 20,
+                    name: "Rae Coleman",
+                    job: "Director",
+                    department: "Directing",
+                    profilePath: nil
+                )
+            ]
+        ),
+        videos: MovieVideos(
+            results: [
+                MovieVideo(
+                    id: "video-\(id)",
+                    key: "abc123",
+                    name: "Trailer",
+                    site: "YouTube",
+                    type: "Trailer",
+                    official: true
+                )
+            ]
+        )
     )
 }

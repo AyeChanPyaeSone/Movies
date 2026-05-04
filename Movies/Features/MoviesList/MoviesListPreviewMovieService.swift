@@ -78,4 +78,57 @@ struct MoviesListPreviewMovieService: MovieService {
     func fetchPopularMoviesPage(_ page: Int) async throws -> MoviePage {
         moviePage
     }
+
+    func fetchMovieDetails(id: Int) async throws -> MovieDetails {
+        let movie = moviePage.results.first { $0.id == id } ?? moviePage.results[0]
+
+        return MovieDetails(
+            id: movie.id,
+            title: movie.title,
+            originalTitle: movie.title,
+            overview: movie.overview,
+            tagline: "Every story hides a signal.",
+            posterPath: movie.posterPath,
+            backdropPath: movie.backdropPath,
+            releaseDate: movie.releaseDate,
+            runtime: 124,
+            status: "Released",
+            homepage: nil,
+            popularity: movie.popularity,
+            voteAverage: movie.voteAverage,
+            voteCount: movie.voteCount,
+            genres: [
+                MovieGenre(id: 28, name: "Action"),
+                MovieGenre(id: 878, name: "Science Fiction")
+            ],
+            credits: MovieCredits(
+                cast: [
+                    MovieCastMember(id: 11, name: "Maya Chen", character: "Nova Vale", profilePath: nil),
+                    MovieCastMember(id: 12, name: "Jon Bell", character: "Captain Rowe", profilePath: nil),
+                    MovieCastMember(id: 13, name: "Ari Stone", character: "Lyra", profilePath: nil)
+                ],
+                crew: [
+                    MovieCrewMember(
+                        id: 21,
+                        name: "Rae Coleman",
+                        job: "Director",
+                        department: "Directing",
+                        profilePath: nil
+                    )
+                ]
+            ),
+            videos: MovieVideos(
+                results: [
+                    MovieVideo(
+                        id: "preview-trailer",
+                        key: "dQw4w9WgXcQ",
+                        name: "\(movie.title) Trailer",
+                        site: "YouTube",
+                        type: "Trailer",
+                        official: true
+                    )
+                ]
+            )
+        )
+    }
 }

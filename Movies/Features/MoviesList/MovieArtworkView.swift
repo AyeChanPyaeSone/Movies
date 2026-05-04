@@ -45,6 +45,8 @@ struct MovieArtworkView: View {
                 Color.clear
             }
         }
+        .aspectRatio(aspectRatio, contentMode: .fill)
+        .clipped()
     }
 }
 

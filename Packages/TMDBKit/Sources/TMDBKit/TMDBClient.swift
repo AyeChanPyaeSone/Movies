@@ -40,7 +40,7 @@ public struct TMDBClient: Sendable {
         do {
             let request = try makeRequest(for: endpoint)
             let (data, response) = try await session.data(for: request)
-            let moviePage = try decodeResponse(data: data, response: response)
+            let moviePage: MoviePage = try decodeResponse(data: data, response: response)
 
             TMDBLogger.network.info(
                 "Received popular movies page \(moviePage.page) containing \(moviePage.results.count) results."
@@ -50,6 +50,35 @@ public struct TMDBClient: Sendable {
         } catch {
             TMDBLogger.network.error(
                 "Popular movies request failed for page \(normalizedPage): \(String(describing: error))"
+            )
+            throw error
+        }
+    }
+
+    public func movieDetails(
+        id: Int,
+        language: String? = nil,
+        appendToResponse: [String] = ["credits", "videos"]
+    ) async throws -> MovieDetails {
+        let endpoint = TMDBEndpoint.movieDetails(
+            id: id,
+            language: language ?? configuration.defaultLanguage,
+            appendToResponse: appendToResponse
+        )
+
+        TMDBLogger.network.debug("Starting movie details request for movie \(id).")
+
+        do {
+            let request = try makeRequest(for: endpoint)
+            let (data, response) = try await session.data(for: request)
+            let details: MovieDetails = try decodeResponse(data: data, response: response)
+
+            TMDBLogger.network.info("Received movie details for movie \(details.id): \(details.title).")
+
+            return details
+        } catch {
+            TMDBLogger.network.error(
+                "Movie details request failed for movie \(id): \(String(describing: error))"
             )
             throw error
         }
@@ -84,7 +113,10 @@ public struct TMDBClient: Sendable {
         return request
     }
 
-    private func decodeResponse(data: Data, response: URLResponse) throws -> MoviePage {
+    private func decodeResponse<Response: Decodable>(
+        data: Data,
+        response: URLResponse
+    ) throws -> Response {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw TMDBError.invalidResponse
         }
@@ -97,6 +129,6 @@ public struct TMDBClient: Sendable {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-        return try decoder.decode(MoviePage.self, from: data)
+        return try decoder.decode(Response.self, from: data)
     }
 }
