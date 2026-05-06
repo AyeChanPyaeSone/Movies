@@ -12,7 +12,7 @@ struct MovieDetailsMetadataView: View {
                 .bold()
                 .foregroundStyle(.white)
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+            LazyVGrid(columns: columns, spacing: 12) {
                 if let runtimeText = details.runtimeText {
                     MovieDetailsFactView(title: "Runtime", value: runtimeText)
                 }
@@ -35,6 +35,15 @@ struct MovieDetailsMetadataView: View {
                     MovieDetailsFactView(title: "Status", value: status)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var columns: [GridItem] {
+        [
+            GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 12),
+            GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 12)
+        ]
     }
 }

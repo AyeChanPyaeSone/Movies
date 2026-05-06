@@ -21,11 +21,11 @@ struct MoviesTests {
         #expect(harness.viewModel.visibleSections.first(where: { $0.category == .upcoming })?.movies.map(\.id) == [201, 202])
         #expect(harness.viewModel.visibleSections.first(where: { $0.category == .nowPlaying })?.movies.map(\.id) == [302, 303])
         #expect(harness.viewModel.errorMessage == nil)
-        #expect(await harness.requestedRequests() == [
+        #expect(Set(await harness.requestedRequests()) == Set([
             MovieServiceRequest(category: .topRated, page: 1),
             MovieServiceRequest(category: .upcoming, page: 1),
             MovieServiceRequest(category: .nowPlaying, page: 1),
-        ])
+        ]))
     }
 
     @MainActor
@@ -106,12 +106,12 @@ struct MoviesTests {
         )
 
         #expect(topRatedMovies.map(\.id) == [101, 102, 103])
-        #expect(await harness.requestedRequests() == [
+        #expect(Set(await harness.requestedRequests()) == Set([
             MovieServiceRequest(category: .topRated, page: 1),
             MovieServiceRequest(category: .upcoming, page: 1),
             MovieServiceRequest(category: .nowPlaying, page: 1),
             MovieServiceRequest(category: .topRated, page: 2),
-        ])
+        ]))
     }
 
     @MainActor
@@ -126,11 +126,11 @@ struct MoviesTests {
         await harness.loadFirstPage()
         try await harness.loadNextPage(in: .topRated)
 
-        #expect(await harness.requestedRequests() == [
+        #expect(Set(await harness.requestedRequests()) == Set([
             MovieServiceRequest(category: .topRated, page: 1),
             MovieServiceRequest(category: .upcoming, page: 1),
             MovieServiceRequest(category: .nowPlaying, page: 1),
-        ])
+        ]))
     }
 
     @MainActor

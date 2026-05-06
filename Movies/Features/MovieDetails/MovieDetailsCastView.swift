@@ -19,6 +19,8 @@ struct MovieDetailsCastView: View {
                 }
             }
             .scrollIndicators(.hidden)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -14,6 +14,7 @@ struct MovieDetailsFactView: View {
                 .font(.subheadline)
                 .foregroundStyle(.white)
                 .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
         .padding()

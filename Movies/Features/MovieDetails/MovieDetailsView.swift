@@ -35,9 +35,12 @@ struct MovieDetailsView: View {
                         MovieDetailsMetadataView(details: details, directors: viewModel.directors)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 28)
+                .containerRelativeFrame(.horizontal)
             }
+            .defaultScrollAnchor(.topLeading)
             .scrollIndicators(.hidden)
 
             if viewModel.isLoading && viewModel.details == nil {
