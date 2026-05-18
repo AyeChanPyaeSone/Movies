@@ -5,6 +5,7 @@ struct MoviesListView: View {
     @State private var viewModel: MoviesListViewModel
     @State private var selectedTab: MoviesListTab = .home
     @State private var isShowingError = false
+    @State private var navigationPath: [Int] = []
 
     init(movieService: any MovieService) {
         _viewModel = State(initialValue: MoviesListViewModel(movieService: movieService))
@@ -13,7 +14,7 @@ struct MoviesListView: View {
     var body: some View {
         @Bindable var viewModel = viewModel
 
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 LinearGradient(
                     colors: [
@@ -46,7 +47,13 @@ struct MoviesListView: View {
                                 MoviesSearchFieldView(searchText: $viewModel.searchText)
 
                                 if let featuredMovie = viewModel.featuredMovie {
-                                    MoviesHeroCardView(movie: featuredMovie, playAction: refreshMovies)
+                                    MoviesHeroCardView(
+                                        movie: featuredMovie,
+                                        playAction: refreshMovies,
+                                        detailsAction: {
+                                            navigationPath.append(featuredMovie.id)
+                                        }
+                                    )
                                 }
 
                                 if viewModel.visibleSections.isEmpty {
@@ -88,6 +95,13 @@ struct MoviesListView: View {
                 isShowingError = newValue != nil
             }
             .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: Int.self) { movieID in
+                MovieDetailsView(
+                    movieID: movieID,
+                    initialMovie: viewModel.movies.first { $0.id == movieID },
+                    movieService: viewModel.movieService
+                )
+            }
             .safeAreaInset(edge: .bottom) {
                 MoviesListTabBarView(selection: $selectedTab)
             }

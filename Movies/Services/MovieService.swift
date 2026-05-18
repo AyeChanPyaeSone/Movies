@@ -2,6 +2,7 @@ import TMDBKit
 
 protocol MovieService: Sendable {
     func fetchMoviesPage(in category: MovieListCategory, page: Int) async throws -> MoviePage
+    func fetchMovieDetails(id: Int) async throws -> MovieDetails
 }
 
 extension MovieService {

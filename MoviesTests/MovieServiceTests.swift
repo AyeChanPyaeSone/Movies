@@ -59,6 +59,21 @@ private actor RecordingMovieService: MovieService {
         )
     }
 
+    func fetchMovieDetails(id: Int) async throws -> MovieDetails {
+        MovieDetails(
+            id: id,
+            title: "Movie \(id)",
+            overview: "Overview \(id)",
+            posterPath: nil,
+            backdropPath: nil,
+            releaseDate: nil,
+            runtime: nil,
+            popularity: 0,
+            voteAverage: 0,
+            voteCount: 0
+        )
+    }
+
     func singleRequest() -> MovieServiceRequest {
         requests[0]
     }

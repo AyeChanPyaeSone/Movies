@@ -4,6 +4,7 @@ import TMDBKit
 struct MoviesHeroCardView: View {
     let movie: Movie
     let playAction: () -> Void
+    let detailsAction: () -> Void
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -48,9 +49,7 @@ struct MoviesHeroCardView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(Color(red: 54 / 255, green: 114 / 255, blue: 1))
 
-                    Spacer()
-
-                    Button("Save", systemImage: "plus") {}
+                    Button("Details", systemImage: "info.circle", action: detailsAction)
                         .buttonStyle(.bordered)
                         .tint(.white)
                 }
@@ -70,6 +69,7 @@ struct MoviesHeroCardView: View {
 #Preview {
     MoviesHeroCardView(
         movie: MoviesListPreviewMovieService().nowPlayingPage.results[0],
-        playAction: {}
+        playAction: {},
+        detailsAction: {}
     )
 }
