@@ -20,6 +20,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>SentryDSNHostPath</key>
+	<string>$(SENTRY_DSN_HOST_PATH)</string>
 	<key>TMDBBearerToken</key>
 	<string>$(TMDB_BEARER_TOKEN)</string>
 	<key>UIApplicationSceneManifest</key>
