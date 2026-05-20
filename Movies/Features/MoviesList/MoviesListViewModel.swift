@@ -117,6 +117,10 @@ final class MoviesListViewModel {
             MoviesLogger.moviesList.error(
                 "Home movie shelf load failed: \(String(describing: error))"
             )
+            ErrorReporter.capture(
+                error,
+                context: .moviesList
+            )
             showError(error)
         }
     }
@@ -180,6 +184,10 @@ final class MoviesListViewModel {
         } catch {
             MoviesLogger.moviesList.error(
                 "Movie load failed for \(category.title) page \(nextPage): \(String(describing: error))"
+            )
+            ErrorReporter.capture(
+                error,
+                context: .moviesList
             )
             showError(error)
         }

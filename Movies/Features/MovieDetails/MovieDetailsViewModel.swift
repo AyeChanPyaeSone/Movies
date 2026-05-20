@@ -108,6 +108,10 @@ final class MovieDetailsViewModel {
             MoviesLogger.movieDetails.error(
                 "Movie details load failed for movie \(movieID): \(String(describing: error))"
             )
+            ErrorReporter.capture(
+                error,
+                context: .movieDetails
+            )
             showError(error)
         }
     }
