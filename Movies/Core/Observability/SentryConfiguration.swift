@@ -9,8 +9,6 @@ enum SentryConfiguration {
         SentrySDK.start { options in
             options.dsn = sentryDSN
 
-            // https://docs.sentry.io/platforms/apple/data-management/data-collected/
-            options.sendDefaultPii = true
             options.tracesSampleRate = 1.0
             
             options.sessionReplay.onErrorSampleRate = 1.0

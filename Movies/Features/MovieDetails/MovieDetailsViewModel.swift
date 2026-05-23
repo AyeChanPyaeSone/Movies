@@ -102,7 +102,11 @@ final class MovieDetailsViewModel {
 
         do {
             MoviesLogger.movieDetails.info("Starting movie details load for movie \(movieID).")
-            details = try await movieService.fetchMovieDetails(id: movieID)
+            details = try await PerformanceTracker.track(
+                .movieDetails(.loadDetails)
+            ) {
+                try await movieService.fetchMovieDetails(id: movieID)
+            }
             MoviesLogger.movieDetails.info("Loaded movie details for movie \(movieID).")
         } catch {
             MoviesLogger.movieDetails.error(
