@@ -108,7 +108,11 @@ final class MoviesListViewModel {
 
         do {
             MoviesLogger.moviesList.info("Loading home movie shelves.")
-            let loadedPages = try await fetchHomePages()
+            let loadedPages = try await PerformanceTracker.track(
+                .moviesList(.loadHomeShelves)
+            ) {
+                try await fetchHomePages()
+            }
             applyHomePages(loadedPages)
             MoviesLogger.moviesList.info(
                 "Loaded home shelves: top rated \(loadedPages[.topRated]?.results.count ?? 0), upcoming \(loadedPages[.upcoming]?.results.count ?? 0), now playing \(loadedPages[.nowPlaying]?.results.count ?? 0)."
@@ -116,6 +120,10 @@ final class MoviesListViewModel {
         } catch {
             MoviesLogger.moviesList.error(
                 "Home movie shelf load failed: \(String(describing: error))"
+            )
+            ErrorReporter.capture(
+                error,
+                context: .moviesList
             )
             showError(error)
         }
@@ -172,7 +180,11 @@ final class MoviesListViewModel {
             MoviesLogger.moviesList.info(
                 "Loading page \(nextPage) for \(category.title)."
             )
-            let moviePage = try await fetchMoviesPage(in: category, page: nextPage)
+            let moviePage = try await PerformanceTracker.track(
+                .moviesList(.loadNextPage)
+            ) {
+                try await fetchMoviesPage(in: category, page: nextPage)
+            }
             append(moviePage, to: category)
             MoviesLogger.moviesList.info(
                 "Loaded page \(moviePage.page) for \(category.title) with \(moviePage.results.count) movies."
@@ -180,6 +192,10 @@ final class MoviesListViewModel {
         } catch {
             MoviesLogger.moviesList.error(
                 "Movie load failed for \(category.title) page \(nextPage): \(String(describing: error))"
+            )
+            ErrorReporter.capture(
+                error,
+                context: .moviesList
             )
             showError(error)
         }

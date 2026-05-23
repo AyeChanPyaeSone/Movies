@@ -25,16 +25,3 @@ extension AppContainer {
         )
     }()
 }
-
-private enum AppConfiguration {
-    static var tmdbBearerToken: String? {
-        guard let infoDictionaryToken = Bundle.main.object(
-            forInfoDictionaryKey: "TMDBBearerToken"
-        ) as? String,
-        !infoDictionaryToken.isEmpty else {
-            return nil
-        }
-
-        return infoDictionaryToken
-    }
-}
