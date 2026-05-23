@@ -204,6 +204,19 @@ final class MoviesListViewModel {
     func dismissError() {
         errorMessage = nil
     }
+
+    func categorySection(for category: MovieListCategory) -> MoviesListSection? {
+        guard let moviePage = moviePagesByCategory[category],
+              !moviePage.results.isEmpty else {
+            return nil
+        }
+
+        return MoviesListSection(
+            title: category.title,
+            movies: moviePage.results,
+            category: category
+        )
+    }
 }
 
 private extension MoviesListViewModel {

@@ -5,7 +5,7 @@ struct MoviesListView: View {
     @State private var viewModel: MoviesListViewModel
     @State private var selectedTab: MoviesListTab = .home
     @State private var isShowingError = false
-    @State private var navigationPath: [Int] = []
+    @State private var navigationPath: [MoviesListRoute] = []
 
     init(movieService: any MovieService) {
         _viewModel = State(initialValue: MoviesListViewModel(movieService: movieService))
@@ -51,7 +51,7 @@ struct MoviesListView: View {
                                         movie: featuredMovie,
                                         playAction: refreshMovies,
                                         detailsAction: {
-                                            navigationPath.append(featuredMovie.id)
+                                            navigationPath.append(.movieDetails(featuredMovie.id))
                                         }
                                     )
                                 }
@@ -63,6 +63,7 @@ struct MoviesListView: View {
                                     ForEach(viewModel.visibleSections) { section in
                                         MovieRowView(
                                             section: section,
+                                            categoryAction: showCategory,
                                             loadMoreAction: viewModel.loadNextPageIfNeeded(in:currentMovie:)
                                         )
                                     }
@@ -95,12 +96,20 @@ struct MoviesListView: View {
                 isShowingError = newValue != nil
             }
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Int.self) { movieID in
-                MovieDetailsView(
-                    movieID: movieID,
-                    initialMovie: viewModel.movies.first { $0.id == movieID },
-                    movieService: viewModel.movieService
-                )
+            .navigationDestination(for: MoviesListRoute.self) { route in
+                switch route {
+                case .movieDetails(let movieID):
+                    MovieDetailsView(
+                        movieID: movieID,
+                        initialMovie: viewModel.movies.first { $0.id == movieID },
+                        movieService: viewModel.movieService
+                    )
+                case .category(let category):
+                    MoviesCategoryView(
+                        category: category,
+                        viewModel: viewModel
+                    )
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 MoviesListTabBarView(selection: $selectedTab)
@@ -130,6 +139,10 @@ struct MoviesListView: View {
         Task {
             await viewModel.loadMovies(reset: true)
         }
+    }
+
+    private func showCategory(_ category: MovieListCategory) {
+        navigationPath.append(.category(category))
     }
 
     private func dismissError() {

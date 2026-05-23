@@ -115,6 +115,24 @@ struct MoviesTests {
     }
 
     @MainActor
+    @Test("Category sections expose every loaded movie for see all")
+    func categorySectionIncludesEveryLoadedMovie() async throws {
+        let harness = MoviesListHarness()
+
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [101]), for: .topRated, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [201]), for: .upcoming, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [301, 302, 303]), for: .nowPlaying, page: 1)
+
+        await harness.loadFirstPage()
+
+        let nowPlayingSection = try #require(harness.viewModel.categorySection(for: .nowPlaying))
+
+        #expect(nowPlayingSection.title == "Now Playing")
+        #expect(nowPlayingSection.movies.map(\.id) == [301, 302, 303])
+        #expect(nowPlayingSection.category == .nowPlaying)
+    }
+
+    @MainActor
     @Test("Pagination stops when a shelf reaches its final page")
     func noAppendOccursOnFinalShelfPage() async throws {
         let harness = MoviesListHarness()

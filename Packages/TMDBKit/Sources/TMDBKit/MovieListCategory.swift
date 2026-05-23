@@ -1,6 +1,6 @@
 import Foundation
 
-public enum MovieListCategory: String, Sendable, CaseIterable, Equatable {
+public enum MovieListCategory: String, Sendable, CaseIterable, Equatable, Hashable {
     case popular
     case topRated
     case upcoming

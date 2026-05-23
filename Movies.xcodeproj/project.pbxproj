@@ -68,11 +68,6 @@
 			path = MoviesUITests;
 			sourceTree = "<group>";
 		};
-		A311C5F52F9C70D100CA7838 /* TMDBTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = TMDBTests;
-			sourceTree = "<group>";
-		};
 		A311C6002F9C721E00CA7838 /* Packages */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Packages;
@@ -123,7 +118,6 @@
 				A311C5B72F9C52AD00CA7838 /* Movies */,
 				A311C5C52F9C52AE00CA7838 /* MoviesTests */,
 				A311C5CF2F9C52AE00CA7838 /* MoviesUITests */,
-				A311C5F52F9C70D100CA7838 /* TMDBTests */,
 				A311C5B62F9C52AD00CA7838 /* Products */,
 				A311C6002F9C721E00CA7838 /* Packages */,
 			);
@@ -227,9 +221,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				A311C5F52F9C70D100CA7838 /* TMDBTests */,
 			);
 			name = TMDBTests;
 			packageProductDependencies = (
