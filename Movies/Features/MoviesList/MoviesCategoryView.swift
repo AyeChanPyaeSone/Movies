@@ -32,7 +32,11 @@ struct MoviesCategoryView: View {
                             }
                             .buttonStyle(.plain)
                             .task(id: movie.id) {
-                                await viewModel.loadNextPageIfNeeded(in: section, currentMovie: movie)
+                                await viewModel.loadNextPageIfNeeded(
+                                    in: section,
+                                    currentMovie: movie,
+                                    source: .categoryScreen
+                                )
                             }
                         }
                     }

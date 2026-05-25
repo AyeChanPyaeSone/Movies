@@ -64,7 +64,13 @@ struct MoviesListView: View {
                                         MovieRowView(
                                             section: section,
                                             categoryAction: showCategory,
-                                            loadMoreAction: viewModel.loadNextPageIfNeeded(in:currentMovie:)
+                                            loadMoreAction: { section, movie in
+                                                await viewModel.loadNextPageIfNeeded(
+                                                    in: section,
+                                                    currentMovie: movie,
+                                                    source: .homeShelf
+                                                )
+                                            }
                                         )
                                     }
                                 }
@@ -142,6 +148,10 @@ struct MoviesListView: View {
     }
 
     private func showCategory(_ category: MovieListCategory) {
+        PerformanceTracker.record(
+            .moviesList(.openCategory),
+            tags: ["category": category.metricName]
+        )
         navigationPath.append(.category(category))
     }
 

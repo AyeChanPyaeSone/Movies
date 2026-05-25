@@ -3,6 +3,7 @@ import Sentry
 enum PerformanceTracker {
     static func track<Value>(
         _ operation: PerformanceOperation,
+        tags: [String: String] = [:],
         work: () async throws -> Value
     ) async throws -> Value {
         guard SentrySDK.isEnabled else {
@@ -11,6 +12,9 @@ enum PerformanceTracker {
 
         let span = makeSpan(for: operation)
         span.setTag(value: operation.featureTagValue, key: "feature")
+        for (key, value) in tags {
+            span.setTag(value: value, key: key)
+        }
 
         do {
             let value = try await work()
@@ -21,6 +25,21 @@ enum PerformanceTracker {
             throw error
         }
     }
+
+    static func record(_ operation: PerformanceOperation, tags: [String: String] = [:]) {
+        guard SentrySDK.isEnabled else {
+            return
+        }
+
+        let breadcrumb = Breadcrumb(level: .info, category: operation.featureTagValue)
+        breadcrumb.type = "user"
+        breadcrumb.message = operation.spanDescription
+        breadcrumb.data = tags.merging(["operation": operation.spanOperation]) { current, _ in
+            current
+        }
+
+        SentrySDK.addBreadcrumb(breadcrumb)
+    }
 }
 
 enum PerformanceOperation {
@@ -30,6 +49,7 @@ enum PerformanceOperation {
     enum FeatureOperation {
         case loadHomeShelves
         case loadNextPage
+        case openCategory
         case loadDetails
     }
 }
@@ -104,6 +124,8 @@ private extension PerformanceOperation.FeatureOperation {
             "load_home_shelves"
         case .loadNextPage:
             "load_next_page"
+        case .openCategory:
+            "open_category"
         case .loadDetails:
             "load_details"
         }
@@ -115,6 +137,8 @@ private extension PerformanceOperation.FeatureOperation {
             "Load home movie shelves"
         case .loadNextPage:
             "Load next movies page"
+        case .openCategory:
+            "Open movie category"
         case .loadDetails:
             "Load movie details"
         }

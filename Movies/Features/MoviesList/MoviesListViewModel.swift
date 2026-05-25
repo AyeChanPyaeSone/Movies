@@ -129,7 +129,11 @@ final class MoviesListViewModel {
         }
     }
 
-    func loadNextPageIfNeeded(in section: MoviesListSection, currentMovie: Movie) async {
+    func loadNextPageIfNeeded(
+        in section: MoviesListSection,
+        currentMovie: Movie,
+        source: MoviePaginationSource = .homeShelf
+    ) async {
         guard searchText.isEmpty else {
             return
         }
@@ -181,7 +185,12 @@ final class MoviesListViewModel {
                 "Loading page \(nextPage) for \(category.title)."
             )
             let moviePage = try await PerformanceTracker.track(
-                .moviesList(.loadNextPage)
+                .moviesList(.loadNextPage),
+                tags: [
+                    "category": category.metricName,
+                    "page": nextPage.formatted(.number.grouping(.never)),
+                    "source": source.rawValue,
+                ]
             ) {
                 try await fetchMoviesPage(in: category, page: nextPage)
             }
@@ -216,6 +225,26 @@ final class MoviesListViewModel {
             movies: moviePage.results,
             category: category
         )
+    }
+}
+
+enum MoviePaginationSource: String {
+    case homeShelf = "home_shelf"
+    case categoryScreen = "category_screen"
+}
+
+extension MovieListCategory {
+    var metricName: String {
+        switch self {
+        case .popular:
+            "popular"
+        case .topRated:
+            "top_rated"
+        case .upcoming:
+            "upcoming"
+        case .nowPlaying:
+            "now_playing"
+        }
     }
 }
 
