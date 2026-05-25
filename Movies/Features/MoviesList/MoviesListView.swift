@@ -1,3 +1,4 @@
+import LoggingKit
 import SwiftUI
 import TMDBKit
 
@@ -148,6 +149,7 @@ struct MoviesListView: View {
     }
 
     private func showCategory(_ category: MovieListCategory) {
+        MoviesLogger.moviesList.info("Opening category screen for \(category.title).")
         PerformanceTracker.record(
             .moviesList(.openCategory),
             tags: ["category": category.metricName]
