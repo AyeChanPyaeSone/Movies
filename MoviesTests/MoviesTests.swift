@@ -89,6 +89,24 @@ struct MoviesTests {
     }
 
     @MainActor
+    @Test("Search results do not expose category navigation")
+    func searchResultsDoNotExposeCategoryNavigation() async throws {
+        let harness = MoviesListHarness()
+
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [101]), for: .topRated, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [201]), for: .upcoming, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [301, 302]), for: .nowPlaying, page: 1)
+
+        await harness.loadFirstPage()
+        harness.viewModel.searchText = "movie"
+
+        let resultsSection = try #require(harness.viewModel.visibleSections.first)
+
+        #expect(resultsSection.title == "Results")
+        #expect(resultsSection.category == nil)
+    }
+
+    @MainActor
     @Test("Loading the last movie of a shelf appends only that shelf's next page")
     func reachingShelfEndAppendsMatchingCategory() async throws {
         let harness = MoviesListHarness()
@@ -106,6 +124,51 @@ struct MoviesTests {
         )
 
         #expect(topRatedMovies.map(\.id) == [101, 102, 103])
+        #expect(Set(await harness.requestedRequests()) == Set([
+            MovieServiceRequest(category: .topRated, page: 1),
+            MovieServiceRequest(category: .upcoming, page: 1),
+            MovieServiceRequest(category: .nowPlaying, page: 1),
+            MovieServiceRequest(category: .topRated, page: 2),
+        ]))
+    }
+
+    @MainActor
+    @Test("Category sections expose every loaded movie for see all")
+    func categorySectionIncludesEveryLoadedMovie() async throws {
+        let harness = MoviesListHarness()
+
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [101]), for: .topRated, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [201]), for: .upcoming, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [301, 302, 303]), for: .nowPlaying, page: 1)
+
+        await harness.loadFirstPage()
+
+        let nowPlayingSection = try #require(harness.viewModel.categorySection(for: .nowPlaying))
+
+        #expect(nowPlayingSection.title == "Now Playing")
+        #expect(nowPlayingSection.movies.map(\.id) == [301, 302, 303])
+        #expect(nowPlayingSection.category == .nowPlaying)
+    }
+
+    @MainActor
+    @Test("Loading the last movie in a category section appends only that category")
+    func reachingCategoryEndAppendsMatchingCategory() async throws {
+        let harness = MoviesListHarness()
+
+        await harness.setPage(makePage(page: 1, totalPages: 2, ids: [101, 102]), for: .topRated, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [201]), for: .upcoming, page: 1)
+        await harness.setPage(makePage(page: 1, totalPages: 1, ids: [301, 302]), for: .nowPlaying, page: 1)
+        await harness.setPage(makePage(page: 2, totalPages: 2, ids: [103, 104]), for: .topRated, page: 2)
+
+        await harness.loadFirstPage()
+        let section = try #require(harness.viewModel.categorySection(for: .topRated))
+        let lastMovie = try #require(section.movies.last)
+
+        await harness.viewModel.loadNextPageIfNeeded(in: section, currentMovie: lastMovie)
+
+        let topRatedSection = try #require(harness.viewModel.categorySection(for: .topRated))
+
+        #expect(topRatedSection.movies.map(\.id) == [101, 102, 103, 104])
         #expect(Set(await harness.requestedRequests()) == Set([
             MovieServiceRequest(category: .topRated, page: 1),
             MovieServiceRequest(category: .upcoming, page: 1),

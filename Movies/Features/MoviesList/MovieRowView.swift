@@ -3,6 +3,7 @@ import TMDBKit
 
 struct MovieRowView: View {
     let section: MoviesListSection
+    let categoryAction: (MovieListCategory) -> Void
     let loadMoreAction: (MoviesListSection, Movie) async -> Void
 
     var body: some View {
@@ -15,15 +16,20 @@ struct MovieRowView: View {
 
                 Spacer()
 
-                Text("See all")
+                if let category = section.category {
+                    Button("See all", systemImage: "chevron.right") {
+                        categoryAction(category)
+                    }
                     .font(.caption)
+                    .labelStyle(.titleAndIcon)
                     .foregroundStyle(.white.opacity(0.75))
+                }
             }
 
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 12) {
                     ForEach(section.movies) { movie in
-                        NavigationLink(value: movie.id) {
+                        NavigationLink(value: MoviesListRoute.movieDetails(movie.id)) {
                             MoviePosterCardView(movie: movie)
                         }
                         .buttonStyle(.plain)
@@ -48,6 +54,7 @@ struct MovieRowView: View {
                 movies: MoviesListPreviewMovieService().topRatedPage.results,
                 category: .topRated
             ),
+            categoryAction: { _ in },
             loadMoreAction: { _, _ in }
         )
     }

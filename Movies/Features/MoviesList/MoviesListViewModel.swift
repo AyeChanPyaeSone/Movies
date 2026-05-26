@@ -129,7 +129,11 @@ final class MoviesListViewModel {
         }
     }
 
-    func loadNextPageIfNeeded(in section: MoviesListSection, currentMovie: Movie) async {
+    func loadNextPageIfNeeded(
+        in section: MoviesListSection,
+        currentMovie: Movie,
+        source: MoviePaginationSource = .homeShelf
+    ) async {
         guard searchText.isEmpty else {
             return
         }
@@ -149,14 +153,14 @@ final class MoviesListViewModel {
 
         guard currentPage.page < currentPage.totalPages else {
             MoviesLogger.moviesList.debug(
-                "Skipped next-page load for \(category.title) because pagination is exhausted at page \(currentPage.page) of \(currentPage.totalPages)."
+                "Skipped next-page load for \(category.title) from \(source.logName) because pagination is exhausted at page \(currentPage.page) of \(currentPage.totalPages)."
             )
             return
         }
 
         guard !isLoading else {
             MoviesLogger.moviesList.debug(
-                "Skipped next-page load for \(category.title) because another request is already in flight."
+                "Skipped next-page load for \(category.title) from \(source.logName) because another request is already in flight."
             )
             return
         }
@@ -178,20 +182,25 @@ final class MoviesListViewModel {
 
         do {
             MoviesLogger.moviesList.info(
-                "Loading page \(nextPage) for \(category.title)."
+                "Loading page \(nextPage) for \(category.title) from \(source.logName)."
             )
             let moviePage = try await PerformanceTracker.track(
-                .moviesList(.loadNextPage)
+                .moviesList(.loadNextPage),
+                tags: [
+                    "category": category.metricName,
+                    "page": nextPage.formatted(.number.grouping(.never)),
+                    "source": source.rawValue,
+                ]
             ) {
                 try await fetchMoviesPage(in: category, page: nextPage)
             }
             append(moviePage, to: category)
             MoviesLogger.moviesList.info(
-                "Loaded page \(moviePage.page) for \(category.title) with \(moviePage.results.count) movies."
+                "Loaded page \(moviePage.page) for \(category.title) from \(source.logName) with \(moviePage.results.count) movies."
             )
         } catch {
             MoviesLogger.moviesList.error(
-                "Movie load failed for \(category.title) page \(nextPage): \(String(describing: error))"
+                "Movie load failed for \(category.title) page \(nextPage) from \(source.logName): \(String(describing: error))"
             )
             ErrorReporter.capture(
                 error,
@@ -203,6 +212,48 @@ final class MoviesListViewModel {
 
     func dismissError() {
         errorMessage = nil
+    }
+
+    func categorySection(for category: MovieListCategory) -> MoviesListSection? {
+        guard let moviePage = moviePagesByCategory[category],
+              !moviePage.results.isEmpty else {
+            return nil
+        }
+
+        return MoviesListSection(
+            title: category.title,
+            movies: moviePage.results,
+            category: category
+        )
+    }
+}
+
+enum MoviePaginationSource: String {
+    case homeShelf = "home_shelf"
+    case categoryScreen = "category_screen"
+
+    var logName: String {
+        switch self {
+        case .homeShelf:
+            "home shelf"
+        case .categoryScreen:
+            "category screen"
+        }
+    }
+}
+
+extension MovieListCategory {
+    var metricName: String {
+        switch self {
+        case .popular:
+            "popular"
+        case .topRated:
+            "top_rated"
+        case .upcoming:
+            "upcoming"
+        case .nowPlaying:
+            "now_playing"
+        }
     }
 }
 
